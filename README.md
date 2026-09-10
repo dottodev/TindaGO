@@ -10,11 +10,15 @@ Core philosophy: **Open → Understand → Tap → Done.**
 
 ## Features
 
-- **Stock** – products with sell (-1) / restock (+1) one-tap actions, low-stock
-  alerts, product details with history, sales history filters
-  (Today / Yesterday / This week / This month)
-- **Tracker** – customer **utang** (mark as paid, share list via Sharesheet)
-  and **expenses** with categories
+- **Stock** – products with optional photo (gallery or camera, stored locally
+  and resized), one-tap sell (-1) / restock (+1), custom-quantity sale and
+  restock sheets, clear In Stock / Low Stock / Out of Stock states with
+  per-product low-stock threshold, product notes, product details with history,
+  sales history filters (Today / Yesterday / This week / This month)
+- **Sales** – custom quantities, percentage or fixed-amount discounts with
+  subtotal / discount / total breakdown, optional sale notes
+- **Tracker** – customer **utang** (mark as paid, share list via Sharesheet,
+  notes) and **expenses** with categories and notes
 - **Dashboard** – today's sales & expenses, outstanding utang, inventory value,
   honest profit estimate (shows "unavailable" when cost data is missing)
 - **Backup & Restore** – local JSON backup/restore, no account, no cloud

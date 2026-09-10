@@ -13,7 +13,7 @@ object CsvUtils {
     }
 
     fun productsCsv(products: List<Product>): String {
-        val sb = StringBuilder("id,name,selling_price_cents,cost_price_cents,quantity,low_stock_threshold,created_at,updated_at\n")
+        val sb = StringBuilder("id,name,selling_price_cents,cost_price_cents,quantity,low_stock_threshold,created_at,updated_at,notes\n")
         for (p in products) {
             sb.append(p.id).append(',')
                 .append(esc(p.name)).append(',')
@@ -22,13 +22,14 @@ object CsvUtils {
                 .append(p.quantity).append(',')
                 .append(p.lowStockThreshold).append(',')
                 .append(p.createdAt).append(',')
-                .append(p.updatedAt).append('\n')
+                .append(p.updatedAt).append(',')
+                .append(esc(p.notes ?: "")).append('\n')
         }
         return sb.toString()
     }
 
     fun salesCsv(sales: List<Sale>): String {
-        val sb = StringBuilder("id,product_id,product_name,quantity,unit_price_cents,total_cents,timestamp\n")
+        val sb = StringBuilder("id,product_id,product_name,quantity,unit_price_cents,total_cents,discount_cents,discount_label,note,timestamp\n")
         for (s in sales) {
             sb.append(s.id).append(',')
                 .append(s.productId?.toString() ?: "").append(',')
@@ -36,6 +37,9 @@ object CsvUtils {
                 .append(s.quantity).append(',')
                 .append(s.unitPriceCents).append(',')
                 .append(s.totalCents).append(',')
+                .append(s.discountCents).append(',')
+                .append(esc(s.discountLabel ?: "")).append(',')
+                .append(esc(s.note ?: "")).append(',')
                 .append(s.timestamp).append('\n')
         }
         return sb.toString()

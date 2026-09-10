@@ -55,6 +55,9 @@ fun UtangCard(
             if (item.description.isNotBlank()) {
                 Text(item.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            if (!item.notes.isNullOrBlank()) {
+                Text(item.notes, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Text(DateUtils.formatDate(item.timestamp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -90,6 +93,9 @@ fun ExpenseCard(
                 Text(MoneyUtils.formatCents(item.amountCents, currency), fontWeight = FontWeight.Bold)
             }
             Text("${item.category} • ${DateUtils.formatDate(item.timestamp)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (!item.notes.isNullOrBlank()) {
+                Text(item.notes, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Spacer(Modifier.height(8.dp))
             TextButton(onClick = onDelete, modifier = Modifier.height(40.dp)) {
                 Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)

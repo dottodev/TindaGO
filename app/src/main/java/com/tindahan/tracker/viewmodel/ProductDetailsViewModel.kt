@@ -18,16 +18,30 @@ class ProductDetailsViewModel(private val repo: TindahanRepository, private val 
 
     fun sell() { viewModelScope.launch { repo.sellOne(productId) } }
     fun restock() { viewModelScope.launch { repo.restockOne(productId) } }
+    fun sellCustom(qty: Int, discountCents: Long, discountLabel: String?, note: String?, onDone: (Long?) -> Unit) {
+        viewModelScope.launch { onDone(repo.sellCustom(productId, qty, discountCents, discountLabel, note)) }
+    }
+    fun restockCustom(qty: Int, onDone: (Int?) -> Unit) {
+        viewModelScope.launch { onDone(repo.restockCustom(productId, qty)) }
+    }
     fun delete(onDone: () -> Unit) {
         viewModelScope.launch {
             product.value?.let { repo.deleteProduct(it) }
             onDone()
         }
     }
-    fun saveEdit(name: String, selling: Long, cost: Long?, qty: Int, thr: Int, onDone: (Boolean) -> Unit) {
+    fun saveEdit(name: String, selling: Long, cost: Long?, qty: Int, thr: Int, imagePath: String?, notes: String?, onDone: (Boolean) -> Unit) {
         viewModelScope.launch {
             val cur = product.value ?: run { onDone(false); return@launch }
-            val r = repo.updateProduct(cur.copy(name = name.trim(), sellingPriceCents = selling, costPriceCents = cost, quantity = qty, lowStockThreshold = thr))
+            val oldImage = cur.imagePath
+            val r = repo.updateProduct(
+                cur.copy(
+                    name = name.trim(), sellingPriceCents = selling, costPriceCents = cost,
+                    quantity = qty, lowStockThreshold = thr, imagePath = imagePath,
+                    notes = notes?.trim()?.ifBlank { null }
+                )
+            )
+            if (r.isSuccess) repo.pruneImage(oldImage, imagePath)
             onDone(r.isSuccess)
         }
     }

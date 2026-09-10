@@ -33,15 +33,14 @@ class SettingsViewModel(
 
     suspend fun buildBackupJson(): String {
         val products = repo.observeProducts().first()
-        val base = repo.buildBackup(businessName.value.ifBlank { null })
-        val full = base.copy(products = products)
+        val full = repo.buildFullBackup(businessName.value.ifBlank { null }, products)
         return BackupUtils.toJson(full)
     }
 
     suspend fun restoreFromJson(raw: String): BackupUtils.ParseResult {
         val parsed = BackupUtils.parseJson(raw)
         if (parsed is BackupUtils.ParseResult.Success) {
-            repo.restoreBackup(parsed.data, parsed.data.products)
+            repo.restoreBackup(parsed.data)
             parsed.data.businessName?.let { settings.setBusinessName(it) }
         }
         return parsed

@@ -50,6 +50,12 @@ interface ProductDao {
     @Query("UPDATE products SET quantity = quantity - 1, updatedAt = :now WHERE id = :id AND quantity > 0")
     suspend fun decrementIfAvailable(id: Long, now: Long): Int
 
+    @Query("UPDATE products SET quantity = quantity - :qty, updatedAt = :now WHERE id = :id AND quantity >= :qty")
+    suspend fun decrementBy(id: Long, qty: Int, now: Long): Int
+
+    @Query("UPDATE products SET quantity = quantity + :qty, updatedAt = :now WHERE id = :id")
+    suspend fun incrementBy(id: Long, qty: Int, now: Long): Int
+
     @Query("UPDATE products SET quantity = quantity + 1, updatedAt = :now WHERE id = :id")
     suspend fun increment(id: Long, now: Long): Int
 }

@@ -3,11 +3,16 @@ package com.tindahan.tracker
 import com.tindahan.tracker.data.local.entities.Expense
 import com.tindahan.tracker.data.local.entities.Product
 import com.tindahan.tracker.data.local.entities.Sale
+import com.tindahan.tracker.data.local.entities.StockState
 import com.tindahan.tracker.data.local.entities.Utang
 import com.tindahan.tracker.util.BackupData
+import com.tindahan.tracker.util.BackupProduct
 import com.tindahan.tracker.util.BackupUtils
 import com.tindahan.tracker.util.CsvUtils
 import com.tindahan.tracker.util.DateUtils
+import com.tindahan.tracker.util.DiscountType
+import com.tindahan.tracker.util.Discounts
+import com.tindahan.tracker.util.ImageStore
 import com.tindahan.tracker.util.MoneyUtils
 import org.junit.Assert.*
 import org.junit.Test
@@ -55,7 +60,9 @@ class ProductLogicTest {
         val p = Product(1, "Coke", 2000, 1500, 5, 5)
         assertTrue(p.isLowStock)
         assertFalse(p.copy(quantity = 6).isLowStock)
-        assertTrue(p.copy(quantity = 0).isLowStock)
+        // Zero quantity is OUT OF STOCK, a distinct state from low stock
+        assertTrue(p.copy(quantity = 0).isOutOfStock)
+        assertFalse(p.copy(quantity = 0).isLowStock)
     }
 
     @Test fun prevent_negative_inventory() {
@@ -141,6 +148,7 @@ class CsvExportTest {
     @Test fun sales_csv() {
         val csv = CsvUtils.salesCsv(listOf(Sale(1, 1, "Coke", 1, 2000, 2000, 0)))
         assertTrue(csv.contains("Coke"))
+        assertTrue(csv.contains("discount_cents"))
     }
 
     @Test fun utang_csv() {
@@ -157,7 +165,7 @@ class CsvExportTest {
 class BackupRestoreTest {
     private fun sample() = BackupData(
         1, 0, "Juan's Store",
-        listOf(Product(0, "Coke", 2000, 1500, 5, 5, 0, 0)),
+        listOf(BackupProduct(Product(0, "Coke", 2000, 1500, 5, 5, 0, 0), null)),
         listOf(Sale(0, null, "Coke", 1, 2000, 2000, 0)),
         emptyList(),
         listOf(Utang(0, "Juan", "", 25000, 0, null, false, null)),
@@ -170,7 +178,7 @@ class BackupRestoreTest {
         assertTrue(parsed is BackupUtils.ParseResult.Success)
         val data = (parsed as BackupUtils.ParseResult.Success).data
         assertEquals(1, data.products.size)
-        assertEquals("Coke", data.products[0].name)
+        assertEquals("Coke", data.products[0].product.name)
         assertEquals("Juan's Store", data.businessName)
     }
 
@@ -216,5 +224,73 @@ class DeleteTest {
         // product 99 deleted, but sale still readable
         assertEquals("Deleted Product", sale.productName)
         assertEquals(99L, sale.productId)
+    }
+}
+
+class DiscountTest {
+    @Test fun percent_discount() {
+        val r = Discounts.calculate(10000, DiscountType.PERCENT, 10.0)
+        assertEquals(10000L, r.subtotalCents)
+        assertEquals(1000L, r.discountCents)
+        assertEquals(9000L, r.totalCents)
+    }
+
+    @Test fun fixed_discount() {
+        val r = Discounts.calculate(10000, DiscountType.FIXED, 25.0)
+        assertEquals(2500L, r.discountCents)
+        assertEquals(7500L, r.totalCents)
+    }
+
+    @Test fun no_discount() {
+        val r = Discounts.calculate(10000, DiscountType.NONE, 50.0)
+        assertEquals(0L, r.discountCents)
+        assertEquals(10000L, r.totalCents)
+    }
+
+    @Test fun discount_clamped_to_subtotal() {
+        val over = Discounts.calculate(1000, DiscountType.FIXED, 50.0)
+        assertEquals(1000L, over.discountCents)
+        assertEquals(0L, over.totalCents)
+        val pctOver = Discounts.calculate(1000, DiscountType.PERCENT, 150.0)
+        assertEquals(1000L, pctOver.discountCents)
+        assertEquals(0L, pctOver.totalCents)
+    }
+
+    @Test fun sale_subtotal_math() {
+        val s = Sale(0, 1, "Coke", 3, 2000, 5400, 0, 600, "10%", "test note")
+        assertEquals(6000L, s.subtotalCents)
+        assertEquals(600L, s.discountCents)
+        assertEquals("10%", s.discountLabel)
+        assertEquals("test note", s.note)
+    }
+}
+
+class StockStateTest {
+    @Test fun three_states() {
+        assertEquals(StockState.IN_STOCK, Product(1, "A", 100, null, 10, 5).stockState)
+        assertEquals(StockState.LOW_STOCK, Product(1, "A", 100, null, 5, 5).stockState)
+        assertEquals(StockState.LOW_STOCK, Product(1, "A", 100, null, 1, 5).stockState)
+        assertEquals(StockState.OUT_OF_STOCK, Product(1, "A", 100, null, 0, 5).stockState)
+    }
+
+    @Test fun out_of_stock_at_zero() {
+        val p = Product(1, "A", 100, null, 0, 5)
+        assertTrue(p.isOutOfStock)
+        assertFalse(p.isLowStock)
+    }
+
+    @Test fun custom_threshold() {
+        assertEquals(StockState.LOW_STOCK, Product(1, "A", 100, null, 3, 10).stockState)
+        assertEquals(StockState.IN_STOCK, Product(1, "A", 100, null, 11, 10).stockState)
+    }
+}
+
+class ImageSampleTest {
+    @Test fun sample_size_math() {
+        assertEquals(1, ImageStore.sampleSize(800, 600, 1024))
+        assertEquals(2, ImageStore.sampleSize(2048, 1536, 1024))
+        assertEquals(4, ImageStore.sampleSize(4000, 3000, 1024))
+        assertEquals(1, ImageStore.sampleSize(0, 0, 1024))
+        assertEquals(1, ImageStore.sampleSize(100, 100, 0))
     }
 }

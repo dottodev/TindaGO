@@ -23,6 +23,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -31,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,7 +41,11 @@ import androidx.compose.ui.unit.dp
 import com.tindahan.tracker.R
 import com.tindahan.tracker.ui.components.ConfirmDeleteDialog
 import com.tindahan.tracker.ui.components.EditProductSheet
+import com.tindahan.tracker.ui.components.ProductImage
+import com.tindahan.tracker.ui.components.RestockSheet
 import com.tindahan.tracker.ui.components.SellRestockRow
+import com.tindahan.tracker.ui.components.SellSheet
+import com.tindahan.tracker.ui.components.StockStatusChip
 import com.tindahan.tracker.util.DateUtils
 import com.tindahan.tracker.util.MoneyUtils
 import com.tindahan.tracker.viewmodel.ProductDetailsViewModel
@@ -55,6 +62,9 @@ fun ProductDetailsScreen(
     val sales by vm.sales.collectAsState()
     var showEdit by remember { mutableStateOf(false) }
     var showDelete by remember { mutableStateOf(false) }
+    var showSell by remember { mutableStateOf(false) }
+    var showRestock by remember { mutableStateOf(false) }
+    val snackbar = remember { SnackbarHostState() }
     val p = product
 
     Scaffold(
@@ -75,7 +85,8 @@ fun ProductDetailsScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbar) }
     ) { pad ->
         if (p == null) {
             Column(Modifier.fillMaxSize().padding(pad).padding(24.dp)) {
@@ -89,7 +100,15 @@ fun ProductDetailsScreen(
                 item {
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                         Column(Modifier.padding(16.dp)) {
-                            Text(p.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                ProductImage(imagePath = p.imagePath, size = 88.dp, targetPx = 512)
+                                Spacer(Modifier.padding(6.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(p.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                    Spacer(Modifier.height(4.dp))
+                                    StockStatusChip(state = p.stockState)
+                                }
+                            }
                             Spacer(Modifier.height(8.dp))
                             Text("${stringResource(R.string.current_stock)}: ${p.quantity}")
                             Text("${stringResource(R.string.selling_price)}: ${MoneyUtils.formatCents(p.sellingPriceCents, currency)}")
@@ -101,18 +120,31 @@ fun ProductDetailsScreen(
                                 else stringResource(R.string.profit_unavailable)
                             )
                             Text("${stringResource(R.string.low_stock_threshold)}: ${p.lowStockThreshold}")
-                            if (p.isLowStock) {
+                            if (!p.notes.isNullOrBlank()) {
                                 Spacer(Modifier.height(4.dp))
-                                Text(stringResource(R.string.low_stock), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                                Text(p.notes, style = MaterialTheme.typography.bodyMedium)
                             }
                             Spacer(Modifier.height(12.dp))
                             SellRestockRow(
-                                onSell = vm::sell,
-                                onRestock = vm::restock,
+                                onSell = { showSell = true },
+                                onRestock = { showRestock = true },
                                 sellLabel = stringResource(R.string.sell),
                                 restockLabel = stringResource(R.string.restock),
-                                sellEnabled = p.quantity > 0
+                                sellEnabled = !p.isOutOfStock
                             )
+                            Spacer(Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Button(
+                                    onClick = { vm.sell() },
+                                    enabled = !p.isOutOfStock,
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                                    modifier = Modifier.weight(1f).height(48.dp)
+                                ) { Text(stringResource(R.string.quick_sell)) }
+                                Button(
+                                    onClick = { vm.restock() },
+                                    modifier = Modifier.weight(1f).height(48.dp)
+                                ) { Text(stringResource(R.string.quick_restock)) }
+                            }
                         }
                     }
                 }
@@ -132,9 +164,20 @@ fun ProductDetailsScreen(
                 }
                 items(sales.take(30), key = { "s${it.id}" }) { s ->
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                        Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("${s.quantity} × ${MoneyUtils.formatCents(s.unitPriceCents, currency)}")
-                            Text(MoneyUtils.formatCents(s.totalCents, currency), fontWeight = FontWeight.Bold)
+                        Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("${s.quantity} × ${MoneyUtils.formatCents(s.unitPriceCents, currency)}")
+                                Text(MoneyUtils.formatCents(s.totalCents, currency), fontWeight = FontWeight.Bold)
+                            }
+                            if (s.discountCents > 0) {
+                                Text(
+                                    "${stringResource(R.string.discount)}: -${MoneyUtils.formatCents(s.discountCents, currency)}${s.discountLabel?.let { " ($it)" } ?: ""}",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                            if (!s.note.isNullOrBlank()) {
+                                Text(s.note, style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
                 }
@@ -147,8 +190,30 @@ fun ProductDetailsScreen(
         EditProductSheet(
             product = p,
             onDismiss = { showEdit = false },
-            onSave = { name, selling, cost, qty, thr ->
-                vm.saveEdit(name, selling, cost, qty, thr) { showEdit = false }
+            onSave = { name, selling, cost, qty, thr, image, notes ->
+                vm.saveEdit(name, selling, cost, qty, thr, image, notes) { showEdit = false }
+            }
+        )
+    }
+    if (showSell && p != null) {
+        SellSheet(
+            productName = p.name,
+            unitPriceCents = p.sellingPriceCents,
+            stock = p.quantity,
+            currency = currency,
+            onDismiss = { showSell = false },
+            onConfirm = { qty, disc, label, note ->
+                vm.sellCustom(qty, disc, label, note) { showSell = false }
+            }
+        )
+    }
+    if (showRestock && p != null) {
+        RestockSheet(
+            productName = p.name,
+            stock = p.quantity,
+            onDismiss = { showRestock = false },
+            onConfirm = { qty ->
+                vm.restockCustom(qty) { showRestock = false }
             }
         )
     }

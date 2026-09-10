@@ -56,10 +56,44 @@ class StockViewModel(private val repo: TindahanRepository) : ViewModel() {
         }
     }
 
-    fun addProduct(name: String, selling: Long, cost: Long?, qty: Int, threshold: Int, onDone: (Boolean) -> Unit) {
+    fun addProduct(
+        name: String,
+        selling: Long,
+        cost: Long?,
+        qty: Int,
+        threshold: Int,
+        imagePath: String? = null,
+        notes: String? = null,
+        onDone: (Boolean) -> Unit
+    ) {
         viewModelScope.launch {
-            val r = repo.addProduct(name, selling, cost, qty, threshold)
+            val r = repo.addProduct(name, selling, cost, qty, threshold, imagePath, notes)
             onDone(r.isSuccess)
+        }
+    }
+
+    fun sellCustom(
+        id: Long,
+        name: String,
+        qty: Int,
+        discountCents: Long,
+        discountLabel: String?,
+        note: String?,
+        soldTemplate: String,
+        onDone: (Long?) -> Unit
+    ) {
+        viewModelScope.launch {
+            val total = repo.sellCustom(id, qty, discountCents, discountLabel, note)
+            if (total != null) _message.value = soldTemplate.format("$qty × $name")
+            onDone(total)
+        }
+    }
+
+    fun restockCustom(id: Long, name: String, qty: Int, restockedTemplate: String, onDone: (Int?) -> Unit) {
+        viewModelScope.launch {
+            val newQty = repo.restockCustom(id, qty)
+            if (newQty != null) _message.value = restockedTemplate.format("$qty × $name")
+            onDone(newQty)
         }
     }
 

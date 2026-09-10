@@ -10,11 +10,17 @@ import com.tindahan.tracker.data.local.entities.Sale
 import com.tindahan.tracker.data.local.entities.StockMovement
 import com.tindahan.tracker.data.local.entities.Utang
 
+data class BackupProduct(
+    val product: Product,
+    /** Base64 JPEG bytes; images are local-only so they travel inside the backup file. */
+    val imageBase64: String? = null
+)
+
 data class BackupData(
     val version: Int,
     val exportedAt: Long,
     val businessName: String?,
-    val products: List<Product>,
+    val products: List<BackupProduct>,
     val sales: List<Sale>,
     val movements: List<StockMovement>,
     val utang: List<Utang>,
@@ -58,7 +64,8 @@ object BackupUtils {
         else root.add("businessName", null)
 
         val pj = JsonArray()
-        for (p in data.products) {
+        for (bp in data.products) {
+            val p = bp.product
             val o = JsonObject()
             o.addProperty("id", p.id)
             o.addProperty("name", p.name)
@@ -68,6 +75,8 @@ object BackupUtils {
             o.addProperty("lowStockThreshold", p.lowStockThreshold)
             o.addProperty("createdAt", p.createdAt)
             o.addProperty("updatedAt", p.updatedAt)
+            if (p.notes != null) o.addProperty("notes", p.notes) else o.add("notes", null)
+            if (bp.imageBase64 != null) o.addProperty("imageBase64", bp.imageBase64) else o.add("imageBase64", null)
             pj.add(o)
         }
         root.add("products", pj)
@@ -82,6 +91,9 @@ object BackupUtils {
             o.addProperty("unitPriceCents", s.unitPriceCents)
             o.addProperty("totalCents", s.totalCents)
             o.addProperty("timestamp", s.timestamp)
+            o.addProperty("discountCents", s.discountCents)
+            if (s.discountLabel != null) o.addProperty("discountLabel", s.discountLabel) else o.add("discountLabel", null)
+            if (s.note != null) o.addProperty("note", s.note) else o.add("note", null)
             sj.add(o)
         }
         root.add("sales", sj)
@@ -149,7 +161,7 @@ object BackupUtils {
                 try { root.get("businessName").asString.ifBlank { null } } catch (e: Exception) { null }
             }
 
-            val products = mutableListOf<Product>()
+            val products = mutableListOf<BackupProduct>()
             for (el in optArray(root, "products")) {
                 if (!el.isJsonObject) continue
                 val o = el.asJsonObject
@@ -163,7 +175,14 @@ object BackupUtils {
                 val cost = optLongOrNull(o, "costPriceCents")?.takeIf { it >= 0 }
                 val qty = optInt(o, "quantity", 0).coerceIn(0, 1_000_000)
                 val thr = optInt(o, "lowStockThreshold", 5).coerceIn(0, 1_000_000)
-                products.add(Product(0, name, selling, cost, qty, thr, optLong(o, "createdAt", System.currentTimeMillis()), optLong(o, "updatedAt", System.currentTimeMillis())))
+                val notes = if (!o.has("notes") || o.get("notes").isJsonNull) null else try { o.get("notes").asString } catch (e: Exception) { null }
+                val img = if (!o.has("imageBase64") || o.get("imageBase64").isJsonNull) null else try { o.get("imageBase64").asString.takeIf { it.length <= 12_000_000 } } catch (e: Exception) { null }
+                products.add(
+                    BackupProduct(
+                        Product(0, name, selling, cost, qty, thr, optLong(o, "createdAt", System.currentTimeMillis()), optLong(o, "updatedAt", System.currentTimeMillis()), null, notes),
+                        img
+                    )
+                )
             }
 
             val sales = mutableListOf<Sale>()
@@ -178,7 +197,10 @@ object BackupUtils {
                 } catch (e: Exception) { continue }
                 if (unit < 0) continue
                 val total = optLong(o, "totalCents", unit * qty).coerceAtLeast(0)
-                sales.add(Sale(0, optLongOrNull(o, "productId"), pname, qty, unit, total, optLong(o, "timestamp", System.currentTimeMillis())))
+                val disc = optLong(o, "discountCents", 0).coerceIn(0, total)
+                val discLabel = if (!o.has("discountLabel") || o.get("discountLabel").isJsonNull) null else try { o.get("discountLabel").asString } catch (e: Exception) { null }
+                val sNote = if (!o.has("note") || o.get("note").isJsonNull) null else try { o.get("note").asString } catch (e: Exception) { null }
+                sales.add(Sale(0, optLongOrNull(o, "productId"), pname, qty, unit, total, optLong(o, "timestamp", System.currentTimeMillis()), disc, discLabel, sNote))
             }
 
             val movements = mutableListOf<StockMovement>()

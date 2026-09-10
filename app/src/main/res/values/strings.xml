@@ -133,12 +133,34 @@
     <string name="help_text">1. Add products in Stock.\n2. Tap SELL to record a sale, RESTOCK to add stock.\n3. Track customer utang in Tracker → UTANG.\n4. Track costs in Tracker → EXPENSES.\n5. Back up your data in More → Backup &amp; Restore.</string>
 
     <!-- Common -->
-    <string name="required">Required</string>
-    <string name="invalid_amount">Enter a valid amount</string>
+    <string name="required">Required</string>    <string name="invalid_amount">Enter a valid amount</string>
     <string name="invalid_number">Enter a valid number</string>
     <string name="error_generic">Something went wrong. Please try again.</string>
     <string name="saved">Saved</string>
     <string name="preparing_data">Preparing your data</string>
     <string name="english">English</string>
     <string name="filipino">Filipino</string>
+
+    <!-- Product images -->
+    <string name="gallery">Gallery</string>
+    <string name="camera">Camera</string>
+    <string name="add_photo_hint">Product photo is optional.</string>
+    <string name="remove_photo">Remove photo</string>
+
+    <!-- Stock status -->
+    <string name="in_stock">In Stock</string>
+    <string name="custom_sale">Custom sale</string>
+    <string name="quick_sell">Quick Sell</string>
+    <string name="quick_restock">Quick Restock</string>
+
+    <!-- Custom sale / restock -->
+    <string name="quantity">Quantity</string>
+    <string name="discount">Discount</string>
+    <string name="discount_none">None</string>
+    <string name="discount_percent">%</string>
+    <string name="discount_fixed">₱</string>
+    <string name="subtotal">Subtotal</string>
+    <string name="total">Total</string>
+    <string name="record_sale">Record Sale</string>
+    <string name="restock_title">Restock</string>
 </resources>

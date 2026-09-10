@@ -123,4 +123,27 @@
     <string name="preparing_data">Inihahanda ang datos mo</string>
     <string name="english">English</string>
     <string name="filipino">Filipino</string>
+
+    <!-- Product images -->
+    <string name="gallery">Gallery</string>
+    <string name="camera">Camera</string>
+    <string name="add_photo_hint">Optional ang larawan ng produkto.</string>
+    <string name="remove_photo">Alisin ang larawan</string>
+
+    <!-- Stock status -->
+    <string name="in_stock">May Stock</string>
+    <string name="custom_sale">Custom na benta</string>
+    <string name="quick_sell">Mabilisang Benta</string>
+    <string name="quick_restock">Mabilisang Dagdag</string>
+
+    <!-- Custom sale / restock -->
+    <string name="quantity">Dami</string>
+    <string name="discount">Diskwento</string>
+    <string name="discount_none">Wala</string>
+    <string name="discount_percent">%</string>
+    <string name="discount_fixed">₱</string>
+    <string name="subtotal">Subtotal</string>
+    <string name="total">Kabuuan</string>
+    <string name="record_sale">I-record ang Benta</string>
+    <string name="restock_title">Dagdagan ng Stock</string>
 </resources>

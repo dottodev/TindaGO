@@ -89,6 +89,16 @@ fun SalesHistoryScreen(
                                     Text(MoneyUtils.formatCents(s.totalCents, currency), fontWeight = FontWeight.Bold)
                                 }
                                 Text("${s.quantity} × ${MoneyUtils.formatCents(s.unitPriceCents, currency)} • ${DateUtils.formatDateTime(s.timestamp)}", style = MaterialTheme.typography.labelSmall)
+                                if (s.discountCents > 0) {
+                                    Text(
+                                        "${stringResource(R.string.discount)}: -${MoneyUtils.formatCents(s.discountCents, currency)}${s.discountLabel?.let { " ($it)" } ?: ""}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                if (!s.note.isNullOrBlank()) {
+                                    Text(s.note, style = MaterialTheme.typography.labelSmall)
+                                }
                             }
                         }
                     }

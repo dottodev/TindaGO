@@ -1,5 +1,6 @@
 package com.tindahan.tracker.data.repository
 
+import android.content.Context
 import com.tindahan.tracker.data.local.dao.ExpenseDao
 import com.tindahan.tracker.data.local.dao.ProductDao
 import com.tindahan.tracker.data.local.dao.SaleDao
@@ -11,7 +12,9 @@ import com.tindahan.tracker.data.local.entities.Sale
 import com.tindahan.tracker.data.local.entities.StockMovement
 import com.tindahan.tracker.data.local.entities.Utang
 import com.tindahan.tracker.util.BackupData
+import com.tindahan.tracker.util.BackupProduct
 import com.tindahan.tracker.util.BackupUtils
+import com.tindahan.tracker.util.ImageStore
 import kotlinx.coroutines.flow.Flow
 
 class TindahanRepository(
@@ -19,8 +22,10 @@ class TindahanRepository(
     private val saleDao: SaleDao,
     private val movementDao: StockMovementDao,
     private val utangDao: UtangDao,
-    private val expenseDao: ExpenseDao
+    private val expenseDao: ExpenseDao,
+    appContext: Context
 ) {
+    private val appContext = appContext.applicationContext
     // ---- Products ----
     fun observeProducts(): Flow<List<Product>> = productDao.observeAll()
     fun searchProducts(q: String): Flow<List<Product>> =
@@ -36,7 +41,9 @@ class TindahanRepository(
         sellingCents: Long,
         costCents: Long?,
         quantity: Int,
-        threshold: Int
+        threshold: Int,
+        imagePath: String? = null,
+        notes: String? = null
     ): Result<Long> {
         val cleanName = name.trim()
         if (cleanName.isEmpty()) return Result.failure(IllegalArgumentException("name"))
@@ -44,7 +51,9 @@ class TindahanRepository(
         if (costCents != null && costCents < 0) return Result.failure(IllegalArgumentException("cost"))
         if (quantity < 0 || threshold < 0) return Result.failure(IllegalArgumentException("qty"))
         val now = System.currentTimeMillis()
-        val id = productDao.insert(Product(0, cleanName, sellingCents, costCents, quantity, threshold, now, now))
+        val id = productDao.insert(
+            Product(0, cleanName, sellingCents, costCents, quantity, threshold, now, now, imagePath, notes?.trim()?.ifBlank { null })
+        )
         movementDao.insert(StockMovement(0, id, cleanName, StockMovement.CREATE, quantity, quantity, now, null))
         return Result.success(id)
     }
@@ -60,9 +69,15 @@ class TindahanRepository(
     suspend fun deleteProduct(p: Product) {
         // Keep sales history (productName snapshot). Remove product row + log movement.
         productDao.delete(p)
+        ImageStore.delete(appContext, p.imagePath)
         movementDao.insert(
             StockMovement(0, null, p.name, StockMovement.DELETE, 0, 0, System.currentTimeMillis(), null)
         )
+    }
+
+    /** Delete the old image file when a product image is replaced or removed. */
+    suspend fun pruneImage(oldPath: String?, newPath: String?) {
+        if (!oldPath.isNullOrBlank() && oldPath != newPath) ImageStore.delete(appContext, oldPath)
     }
 
     /** Returns product name on success, null if out of stock. */
@@ -77,12 +92,54 @@ class TindahanRepository(
         return product.name
     }
 
+    /**
+     * Sell a custom quantity with an optional discount and note.
+     * Returns total charged on success, null when stock is insufficient.
+     */
+    suspend fun sellCustom(
+        productId: Long,
+        qty: Int,
+        discountCents: Long,
+        discountLabel: String?,
+        note: String?
+    ): Long? {
+        if (qty <= 0) return null
+        val now = System.currentTimeMillis()
+        val product = productDao.getById(productId) ?: return null
+        if (product.quantity < qty) return null
+        val updated = productDao.decrementBy(productId, qty, now)
+        if (updated == 0) return null
+        val subtotal = product.sellingPriceCents * qty.toLong()
+        val disc = discountCents.coerceIn(0, subtotal)
+        val total = subtotal - disc
+        saleDao.insert(
+            Sale(0, product.id, product.name, qty, product.sellingPriceCents, total, now, disc, discountLabel, note?.trim()?.ifBlank { null })
+        )
+        movementDao.insert(
+            StockMovement(0, product.id, product.name, StockMovement.SELL, -qty, product.quantity - qty, now, note?.trim()?.ifBlank { null })
+        )
+        return total
+    }
+
     suspend fun restockOne(productId: Long): String? {
         val now = System.currentTimeMillis()
         val product = productDao.getById(productId) ?: return null
         productDao.increment(productId, now)
         movementDao.insert(StockMovement(0, product.id, product.name, StockMovement.RESTOCK, 1, product.quantity + 1, now, null))
         return product.name
+    }
+
+    /** Restock a custom quantity. Returns new quantity, or null if product is gone. */
+    suspend fun restockCustom(productId: Long, qty: Int): Int? {
+        if (qty <= 0) return null
+        val now = System.currentTimeMillis()
+        val product = productDao.getById(productId) ?: return null
+        if (qty > 1_000_000 - product.quantity) return null
+        productDao.incrementBy(productId, qty, now)
+        movementDao.insert(
+            StockMovement(0, product.id, product.name, StockMovement.RESTOCK, qty, product.quantity + qty, now, null)
+        )
+        return product.quantity + qty
     }
 
     fun observeMovementsForProduct(id: Long): Flow<List<StockMovement>> = movementDao.observeForProduct(id)
@@ -149,9 +206,37 @@ class TindahanRepository(
         return BackupData(BackupUtils.BACKUP_VERSION, System.currentTimeMillis(), businessName, emptyList(), sales, movements, utang, expenses)
     }
 
-    suspend fun restoreBackup(data: BackupData, products: List<Product>) {
-        // Insert products first and remap? Keep simple: insert all as new rows (ids reset to 0 already in parser).
-        for (p in products) productDao.insert(p.copy(id = 0))
+    /** Full backup assembly including Base64-embedded product images (local-only). */
+    suspend fun buildFullBackup(businessName: String?, products: List<Product>): BackupData {
+        val base = buildBackup(businessName)
+        val withImages = products.map { p ->
+            val b64 = p.imagePath?.let { name ->
+                ImageStore.readBytes(appContext, name)?.let { bytes ->
+                    try {
+                        android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+            }
+            BackupProduct(p, b64)
+        }
+        return base.copy(products = withImages)
+    }
+
+    suspend fun restoreBackup(data: BackupData) {
+        // Insert products first (ids reset to 0 already in parser), restoring embedded images.
+        for (bp in data.products) {
+            val imageName = bp.imageBase64?.let { b64 ->
+                try {
+                    val bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT)
+                    ImageStore.saveBytes(appContext, bytes)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            productDao.insert(bp.product.copy(id = 0, imagePath = imageName))
+        }
         for (s in data.sales) saleDao.insert(s.copy(id = 0))
         for (m in data.movements) movementDao.insert(m.copy(id = 0))
         for (u in data.utang) utangDao.insert(u.copy(id = 0))

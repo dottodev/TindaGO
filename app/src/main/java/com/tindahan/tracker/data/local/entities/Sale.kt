@@ -7,6 +7,8 @@ import androidx.room.PrimaryKey
 /**
  * Historical sale. productId is nullable and NOT a hard FK cascade so that
  * deleting a product preserves history (productName snapshot is kept).
+ * Discounts are stored as a fixed centavo amount plus a display label
+ * (e.g. "10%" or "₱5.00"); totalCents = quantity*unit - discountCents.
  */
 @Entity(
     tableName = "sales",
@@ -19,5 +21,10 @@ data class Sale(
     val quantity: Int,
     val unitPriceCents: Long,
     val totalCents: Long,
-    val timestamp: Long = System.currentTimeMillis()
-)
+    val timestamp: Long = System.currentTimeMillis(),
+    val discountCents: Long = 0,
+    val discountLabel: String? = null,
+    val note: String? = null
+) {
+    val subtotalCents: Long get() = quantity * unitPriceCents
+}
