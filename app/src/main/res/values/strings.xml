@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tinda GO</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Tinda GO</string>
+    <string name="onboarding_desc_1">Track your products, sales, utang, and expenses.</string>
+    <string name="onboarding_title_2">Works Offline</string>
+    <string name="onboarding_desc_2">Your business data stays on this phone.</string>
+    <string name="onboarding_title_3">Ready?</string>
+    <string name="onboarding_desc_3">Let\'s get started.</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_get_started">Get Started</string>
+    <string name="business_name_prompt">What should we call your business?</string>
+    <string name="business_name_hint">e.g. Juan\'s Store</string>
+    <string name="business_name_save">Save</string>
+
+    <!-- Navigation -->
+    <string name="nav_stock">Stock</string>
+    <string name="nav_tracker">Tracker</string>
+    <string name="nav_more">More</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_product_details">Product Details</string>
+
+    <!-- Stock -->
+    <string name="inventory_value">Inventory Value</string>
+    <string name="today_sales">Today\'s Sales</string>
+    <string name="total_products">Total Products</string>
+    <string name="total_items">Total Items</string>
+    <string name="search_products">Search Products</string>
+    <string name="sell">Sell</string>
+    <string name="restock">Restock</string>
+    <string name="add_product">Add Product</string>
+    <string name="edit_product">Edit Product</string>
+    <string name="delete_product">Delete Product</string>
+    <string name="delete_product_confirm">Delete this product?</string>
+    <string name="delete_product_message">This will remove the product from stock. Past sales are kept for history.</string>
+    <string name="product_name">Product name</string>
+    <string name="selling_price">Selling price</string>
+    <string name="cost_price">Cost price (optional)</string>
+    <string name="starting_quantity">Starting quantity</string>
+    <string name="low_stock_threshold">Low-stock threshold</string>
+    <string name="low_stock">LOW STOCK</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="sold_message">Sold 1 %1$s</string>
+    <string name="restocked_message">Restocked 1 %1$s</string>
+    <string name="out_of_stock">Out of stock</string>
+    <string name="no_products">No products yet.</string>
+    <string name="no_products_hint">Add your first product to start tracking your stock.</string>
+    <string name="current_stock">Current stock</string>
+    <string name="estimated_profit_per_item">Estimated profit per item</string>
+    <string name="recent_transactions">Recent transactions</string>
+    <string name="profit_unavailable">Profit estimate unavailable</string>
+
+    <!-- Sales history -->
+    <string name="sales_history">Sales History</string>
+    <string name="filter_today">Today</string>
+    <string name="filter_yesterday">Yesterday</string>
+    <string name="filter_week">This week</string>
+    <string name="filter_month">This month</string>
+    <string name="filter_all">All</string>
+    <string name="no_sales">No sales recorded.</string>
+
+    <!-- Tracker -->
+    <string name="tab_utang">UTANG</string>
+    <string name="tab_expenses">EXPENSES</string>
+    <string name="unpaid_utang">Unpaid Utang</string>
+    <string name="paid_utang">Paid Utang</string>
+    <string name="total_utang">Total Utang</string>
+    <string name="customer_name">Customer name</string>
+    <string name="description">Description</string>
+    <string name="amount">Amount</string>
+    <string name="date">Date</string>
+    <string name="due_date">Due date (optional)</string>
+    <string name="notes">Notes (optional)</string>
+    <string name="add_utang">Add Utang</string>
+    <string name="mark_as_paid">Mark as Paid</string>
+    <string name="paid">PAID</string>
+    <string name="unpaid">UNPAID</string>
+    <string name="no_unpaid_utang">No unpaid utang.</string>
+    <string name="no_utang_hint">All clear. Add utang when a customer buys on credit.</string>
+    <string name="delete_utang_confirm">Delete this utang?</string>
+    <string name="search_customer">Search by customer name</string>
+    <string name="share_utang_list">Share Utang List</string>
+
+    <!-- Expenses -->
+    <string name="today_expenses">Today\'s Expenses</string>
+    <string name="month_expenses">This Month</string>
+    <string name="total_expenses">Total Expenses</string>
+    <string name="add_expense">Add Expense</string>
+    <string name="category">Category</string>
+    <string name="no_expenses">No expenses recorded.</string>
+    <string name="no_expenses_hint">Add an expense to track where your money goes.</string>
+    <string name="delete_expense_confirm">Delete this expense?</string>
+    <string name="search_expenses">Search by description</string>
+    <string name="cat_stock">Stock</string>
+    <string name="cat_electricity">Electricity</string>
+    <string name="cat_supplies">Supplies</string>
+    <string name="cat_transportation">Transportation</string>
+    <string name="cat_food">Food</string>
+    <string name="cat_other">Other</string>
+
+    <!-- Dashboard -->
+    <string name="outstanding_utang">Outstanding Utang</string>
+    <string name="estimated_profit">Estimated Profit</string>
+
+    <!-- More / Settings -->
+    <string name="business_name">Business Name</string>
+    <string name="language">Language</string>
+    <string name="theme">Theme</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_system">System</string>
+    <string name="currency">Currency</string>
+    <string name="default_low_stock">Default Low-stock Threshold</string>
+    <string name="backup_restore">Backup &amp; Restore</string>
+    <string name="export_data">Export Data</string>
+    <string name="help">Help</string>
+    <string name="about">About</string>
+    <string name="backup_now">Back up now</string>
+    <string name="restore_backup">Restore backup</string>
+    <string name="restore_confirm_title">Restore backup?</string>
+    <string name="restore_confirm_message">Your current data may be replaced.</string>
+    <string name="restore">Restore</string>
+    <string name="export_products">Products</string>
+    <string name="export_sales">Sales</string>
+    <string name="export_utang">Utang</string>
+    <string name="export_expenses">Expenses</string>
+    <string name="about_text">Tinda GO v1.0.0\nSimple, fast, offline-only tracking for small businesses.\nYour data stays on this phone.</string>
+    <string name="help_text">1. Add products in Stock.\n2. Tap SELL to record a sale, RESTOCK to add stock.\n3. Track customer utang in Tracker → UTANG.\n4. Track costs in Tracker → EXPENSES.\n5. Back up your data in More → Backup &amp; Restore.</string>
+
+    <!-- Common -->
+    <string name="required">Required</string>
+    <string name="invalid_amount">Enter a valid amount</string>
+    <string name="invalid_number">Enter a valid number</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="saved">Saved</string>
+    <string name="preparing_data">Preparing your data</string>
+    <string name="english">English</string>
+    <string name="filipino">Filipino</string>
+</resources>

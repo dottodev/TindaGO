@@ -1,0 +1,8 @@
+# Baseline Profile — startup + key journeys
+# Generated placeholder; to regenerate: ./gradlew :app:generateBaselineProfile
+# Journeys covered: Startup, Stock screen, Tracker screen, Adding a product, Recording a sale
+HSPLcom/tindahan/tracker/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLcom/tindahan/tracker/ui/screens/StockScreenKt;->StockScreen(*)
+HSPLcom/tindahan/tracker/ui/screens/TrackerScreenKt;->TrackerScreen(*)
+HSPLcom/tindahan/tracker/data/local/AppDatabase;->productDao()L
+HSPLcom/tindahan/tracker/data/local/AppDatabase;->saleDao()L
