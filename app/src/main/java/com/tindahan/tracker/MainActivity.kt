@@ -14,7 +14,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Calculate
@@ -28,10 +30,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -110,32 +112,42 @@ private fun TindahanAppContent(app: TindahanApp) {
     val currency by settings.currency.collectAsState(initial = "₱")
     val businessName by settings.businessName.collectAsState(initial = "")
     val defaultLow by settings.defaultLowStock.collectAsState(initial = 5)
-    val onboardingDone by settings.onboardingDone.collectAsState(initial = false)
+    val onboardingDone by settings.onboardingDone.collectAsState(initial = null)
 
-    // Localized resources without restarting the Activity: swapping the
-    // context recomposes every string in place — no state loss, no flicker.
-    // attachBaseContext (forced locale) still covers cold start.
-    val strings = remember(language) {
-        val locale = Locale(if (language == "tl") "tl" else "en")
-        val config = Configuration(app.resources.configuration).apply { setLocale(locale) }
-        app.createConfigurationContext(config)
-    }
-    // Mirror language for next process start + keep JVM formatting consistent.
-    // commit() (not apply()) so a cold start right after switching can't
-    // read a stale value.
+    // Language switching restarts the Activity (the only reliable way to
+    // re-resolve every resource). Hardened against glitches:
+    // - preference is commit()ed synchronously first, so the restarted
+    //   Activity can never read a stale value (that race caused a restart storm)
+    // - a short delay lets open popups/dialogs fully dismiss first
+    // - a process-level guard makes a repeat loop impossible
+    // - the loading gate below means the UI never flashes the wrong start screen
+    val realActivity = LocalContext.current as? Activity
     androidx.compose.runtime.LaunchedEffect(language) {
-        Locale.setDefault(if (language == "tl") Locale("tl") else Locale.ENGLISH)
         app.getSharedPreferences("locale_mirror", Context.MODE_PRIVATE)
             .edit().putString("language", language).commit()
+        Locale.setDefault(if (language == "tl") Locale("tl") else Locale.ENGLISH)
+        kotlinx.coroutines.delay(300)
+        val target = if (language == "tl") "tl" else "en"
+        val current = realActivity?.resources?.configuration?.locales?.get(0)?.language
+        if (realActivity != null && current != null && current != target && lastRecreateLang != language) {
+            lastRecreateLang = language
+            realActivity.recreate()
+        }
+    }
+
+    if (onboardingDone == null) {
+        // DataStore hasn't emitted yet: don't guess a start destination
+        // (guessing wrong flashes onboarding and destabilizes navigation).
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
     }
 
     TindahanTheme(themeMode = theme) {
-        // Captured BEFORE the provider below overrides LocalContext.
-        val realActivity = LocalContext.current as? Activity
-        androidx.compose.runtime.CompositionLocalProvider(
-            LocalContext provides strings,
-            LocalAppActivity provides realActivity
-        ) {
         val nav = rememberNavController()
         val stockVm: StockViewModel = viewModel(factory = StockViewModel.Factory(repo))
         val utangVm: UtangViewModel = viewModel(factory = UtangViewModel.Factory(repo))
@@ -145,7 +157,7 @@ private fun TindahanAppContent(app: TindahanApp) {
         val notesVm: NotesViewModel = viewModel(factory = NotesViewModel.Factory(repo))
 
         // Keep onboarding as start destination when not done
-        val start = if (onboardingDone) Routes.STOCK else Routes.ONBOARDING
+        val start = if (onboardingDone == true) Routes.STOCK else Routes.ONBOARDING
         // Recompose NavHost when onboardingDone flips: use key
         Keyed(start) {
             Scaffold(
@@ -271,7 +283,6 @@ private fun TindahanAppContent(app: TindahanApp) {
                 }
             }
         }
-        }
     }
 }
 
@@ -281,6 +292,5 @@ private fun Keyed(key: String, content: @Composable () -> Unit) {
     androidx.compose.runtime.key(key) { content() }
 }
 
-/** The real Activity. LocalContext is overridden with localized resources,
- * so screens that must launch intents use this instead. */
-internal val LocalAppActivity = compositionLocalOf<Activity?> { null }
+// Process-level guard: survives Activity recreation, breaks any recreate loop.
+private var lastRecreateLang: String? = null

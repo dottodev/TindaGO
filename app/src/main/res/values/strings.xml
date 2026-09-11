@@ -131,7 +131,7 @@
     <string name="export_sales">Sales</string>
     <string name="export_utang">Utang</string>
     <string name="export_expenses">Expenses</string>
-    <string name="about_text">Tinda GO v1.4.3\nSimple, fast, offline-first tracking for small businesses.\nYour business data stays on this phone.</string>
+    <string name="about_text">Tinda GO v1.4.4\nSimple, fast, offline-first tracking for small businesses.\nYour business data stays on this phone.</string>
     <string name="help_text">1. Add products in Stock.\n2. Tap SELL to record a sale, RESTOCK to add stock.\n3. Track customer utang in Tracker → UTANG.\n4. Track costs in Tracker → EXPENSES.\n5. Back up your data in More → Backup &amp; Restore.</string>
 
     <!-- Common -->
