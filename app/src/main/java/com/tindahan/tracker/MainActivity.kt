@@ -110,19 +110,19 @@ private fun TindahanAppContent(app: TindahanApp) {
     val defaultLow by settings.defaultLowStock.collectAsState(initial = 5)
     val onboardingDone by settings.onboardingDone.collectAsState(initial = false)
 
-    // Mirror language for next process start (attachBaseContext)
-    androidx.compose.runtime.LaunchedEffect(language) {
-        app.getSharedPreferences("locale_mirror", Context.MODE_PRIVATE)
-            .edit().putString("language", language).apply()
-    }
-
-    // Changing language swaps string resources, which only take effect after
-    // recreation. Without this the UI would stay in the old language.
+    // Mirror language for next process start (attachBaseContext) and apply it
+    // to the running Activity. The preference MUST be committed synchronously
+    // (not apply()) before any recreate(): attachBaseContext reads it from
+    // disk, and an async write loses the race, causing a recreate storm.
+    // The static guard is a second layer of protection against loops.
     val activity = LocalContext.current as? android.app.Activity
     androidx.compose.runtime.LaunchedEffect(language, activity) {
+        app.getSharedPreferences("locale_mirror", Context.MODE_PRIVATE)
+            .edit().putString("language", language).commit()
         val target = if (language == "tl") "tl" else "en"
         val current = activity?.resources?.configuration?.locales?.get(0)?.language
-        if (activity != null && current != null && current != target) {
+        if (activity != null && current != null && current != target && lastRecreateLang != language) {
+            lastRecreateLang = language
             activity.recreate()
         }
     }
@@ -271,3 +271,6 @@ private fun TindahanAppContent(app: TindahanApp) {
 private fun Keyed(key: String, content: @Composable () -> Unit) {
     androidx.compose.runtime.key(key) { content() }
 }
+
+// Process-level guard: survives Activity recreation, breaks any recreate loop.
+private var lastRecreateLang: String? = null
