@@ -116,17 +116,17 @@ fun StockScreen(
                 )
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    StatCard(label = stringResource(R.string.inventory_value), value = MoneyUtils.formatCents(invValue, currency), modifier = Modifier.weight(1f))
-                    StatCard(label = stringResource(R.string.today_sales), value = MoneyUtils.formatCents(todaySales, currency), modifier = Modifier.weight(1f))
+                    StatCard(label = stringResource(R.string.inventory_value), value = MoneyUtils.formatCents(invValue, currency), modifier = Modifier.weight(1f), container = MaterialTheme.colorScheme.primaryContainer)
+                    StatCard(label = stringResource(R.string.today_sales), value = MoneyUtils.formatCents(todaySales, currency), modifier = Modifier.weight(1f), container = MaterialTheme.colorScheme.secondaryContainer)
                     if (wide) {
-                        StatCard(label = stringResource(R.string.total_products), value = count.toString(), modifier = Modifier.weight(1f))
+                        StatCard(label = stringResource(R.string.total_products), value = count.toString(), modifier = Modifier.weight(1f), container = MaterialTheme.colorScheme.tertiaryContainer)
                         StatCard(label = stringResource(R.string.total_items), value = items.toString(), modifier = Modifier.weight(1f))
                     }
                 }
                 if (!wide) {
                     Spacer(Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                        StatCard(label = stringResource(R.string.total_products), value = count.toString(), modifier = Modifier.weight(1f))
+                        StatCard(label = stringResource(R.string.total_products), value = count.toString(), modifier = Modifier.weight(1f), container = MaterialTheme.colorScheme.tertiaryContainer)
                         StatCard(label = stringResource(R.string.total_items), value = items.toString(), modifier = Modifier.weight(1f))
                     }
                 }

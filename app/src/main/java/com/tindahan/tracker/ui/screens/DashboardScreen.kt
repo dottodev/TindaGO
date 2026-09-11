@@ -51,13 +51,13 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                StatCard(label = stringResource(R.string.today_sales), value = MoneyUtils.formatCents(state.todaySales, currency), modifier = Modifier.fillMaxWidth())
+                StatCard(label = stringResource(R.string.today_sales), value = MoneyUtils.formatCents(state.todaySales, currency), modifier = Modifier.fillMaxWidth(), container = MaterialTheme.colorScheme.primaryContainer)
             }
             item {
-                StatCard(label = stringResource(R.string.today_expenses), value = MoneyUtils.formatCents(state.todayExpenses, currency), modifier = Modifier.fillMaxWidth())
+                StatCard(label = stringResource(R.string.today_expenses), value = MoneyUtils.formatCents(state.todayExpenses, currency), modifier = Modifier.fillMaxWidth(), container = MaterialTheme.colorScheme.secondaryContainer)
             }
             item {
-                StatCard(label = stringResource(R.string.outstanding_utang), value = MoneyUtils.formatCents(state.outstandingUtang, currency), modifier = Modifier.fillMaxWidth())
+                StatCard(label = stringResource(R.string.outstanding_utang), value = MoneyUtils.formatCents(state.outstandingUtang, currency), modifier = Modifier.fillMaxWidth(), container = MaterialTheme.colorScheme.tertiaryContainer)
             }
             item {
                 StatCard(label = stringResource(R.string.inventory_value), value = MoneyUtils.formatCents(state.inventoryValue, currency), modifier = Modifier.fillMaxWidth())

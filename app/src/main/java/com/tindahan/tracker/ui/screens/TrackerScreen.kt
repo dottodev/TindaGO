@@ -90,8 +90,8 @@ private fun UtangTab(vm: UtangViewModel, currency: String, businessName: String)
 
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            StatCard(label = stringResource(R.string.unpaid_utang), value = MoneyUtils.formatCents(unpaid, currency), modifier = Modifier.weight(1f))
-            StatCard(label = stringResource(R.string.paid_utang), value = MoneyUtils.formatCents(paid, currency), modifier = Modifier.weight(1f))
+            StatCard(label = stringResource(R.string.unpaid_utang), value = MoneyUtils.formatCents(unpaid, currency), modifier = Modifier.weight(1f), container = MaterialTheme.colorScheme.tertiaryContainer)
+            StatCard(label = stringResource(R.string.paid_utang), value = MoneyUtils.formatCents(paid, currency), modifier = Modifier.weight(1f), container = MaterialTheme.colorScheme.primaryContainer)
         }
         StatCard(label = stringResource(R.string.total_utang), value = MoneyUtils.formatCents(total, currency))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -156,8 +156,8 @@ private fun ExpensesTab(vm: ExpenseViewModel, currency: String) {
 
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            StatCard(label = stringResource(R.string.today_expenses), value = MoneyUtils.formatCents(today, currency), modifier = Modifier.weight(1f))
-            StatCard(label = stringResource(R.string.month_expenses), value = MoneyUtils.formatCents(month, currency), modifier = Modifier.weight(1f))
+            StatCard(label = stringResource(R.string.today_expenses), value = MoneyUtils.formatCents(today, currency), modifier = Modifier.weight(1f), container = MaterialTheme.colorScheme.secondaryContainer)
+            StatCard(label = stringResource(R.string.month_expenses), value = MoneyUtils.formatCents(month, currency), modifier = Modifier.weight(1f), container = MaterialTheme.colorScheme.tertiaryContainer)
         }
         StatCard(label = stringResource(R.string.total_expenses), value = MoneyUtils.formatCents(total, currency))
         androidx.compose.material3.Button(onClick = { showAdd = true }, modifier = Modifier.fillMaxWidth().height(48.dp)) {

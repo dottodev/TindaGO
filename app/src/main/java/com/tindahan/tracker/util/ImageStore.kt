@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import android.util.LruCache
 import java.io.File
 import java.io.FileOutputStream
@@ -22,6 +23,8 @@ object ImageStore {
     const val DIR_NAME = "product_images"
     const val MAX_SAVED_DIM = 1024
     const val JPEG_QUALITY = 85
+    private const val TAG = "ImageStore"
+    private const val MAX_SOURCE_BYTES = 30_000_000
 
     // Small memory cache (~8MB): key = "$name@$sizePx", size in KB
     private val cache = object : LruCache<String, Bitmap>(8 * 1024) {
@@ -34,55 +37,69 @@ object ImageStore {
 
     fun dir(context: Context): File = File(context.filesDir, DIR_NAME).apply { mkdirs() }
 
-    /** Decode + downsample [uri] and save as JPEG. Returns file name, or null on failure. */
+    /**
+     * Decode + downsample [uri] and save as JPEG. Returns file name, or null on failure.
+     * Reads the full bytes first and decodes from memory: some content providers
+     * hand out streams that BitmapFactory.decodeStream cannot handle, which made
+     * every photo fail on affected devices.
+     */
     fun saveFromUri(context: Context, uri: Uri, maxDim: Int = MAX_SAVED_DIM): String? {
         return try {
-            val dir = dir(context)
+            val bytes = try {
+                context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            } catch (t: Throwable) {
+                Log.e(TAG, "saveFromUri: cannot open $uri", t)
+                null
+            } ?: return null
+            if (bytes.isEmpty() || bytes.size > MAX_SOURCE_BYTES) {
+                Log.e(TAG, "saveFromUri: bad size ${bytes.size} for $uri")
+                return null
+            }
+            saveJpegBytes(context, bytes, maxDim)
+        } catch (t: Throwable) {
+            Log.e(TAG, "saveFromUri failed for $uri", t)
+            null
+        }
+    }
+
+    private fun saveJpegBytes(context: Context, bytes: ByteArray, maxDim: Int): String? {
+        return try {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            context.contentResolver.openInputStream(uri)?.use {
-                BitmapFactory.decodeStream(it, null, bounds)
-            } ?: return null
-            val sample = sampleSize(bounds.outWidth, bounds.outHeight, maxDim)
-            val opts = BitmapFactory.Options().apply { inSampleSize = sample }
-            val bmp = context.contentResolver.openInputStream(uri)?.use {
-                BitmapFactory.decodeStream(it, null, opts)
-            } ?: return null
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+                Log.e(TAG, "saveJpegBytes: not an image (${bytes.size} bytes)")
+                return null
+            }
+            val opts = BitmapFactory.Options().apply {
+                inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, maxDim)
+                // Photos need no alpha; halves decode memory on low-end phones.
+                inPreferredConfig = Bitmap.Config.RGB_565
+            }
+            val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts) ?: run {
+                Log.e(TAG, "saveJpegBytes: decode failed")
+                return null
+            }
             val scaled = scaleDown(bmp, maxDim)
             if (scaled !== bmp) bmp.recycle()
             val name = UUID.randomUUID().toString() + ".jpg"
-            FileOutputStream(File(dir, name)).use { out ->
-                scaled.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)
+            FileOutputStream(File(dir(context), name)).use { out ->
+                if (!scaled.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)) {
+                    Log.e(TAG, "saveJpegBytes: compress failed")
+                    return null
+                }
             }
-            if (scaled.isRecycled.not()) scaled.recycle()
+            if (!scaled.isRecycled) scaled.recycle()
             name
-        } catch (e: Exception) {
+        } catch (t: Throwable) {
+            Log.e(TAG, "saveJpegBytes failed", t)
             null
         }
     }
 
     /** Write raw bytes (e.g. from backup restore) as a new image file. Returns file name or null. */
     fun saveBytes(context: Context, bytes: ByteArray): String? {
-        return try {
-            if (bytes.isEmpty() || bytes.size > 8_000_000) return null
-            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
-            if (bounds.outWidth <= 0) return null
-            val sample = sampleSize(bounds.outWidth, bounds.outHeight, MAX_SAVED_DIM)
-            val bmp = BitmapFactory.decodeByteArray(
-                bytes, 0, bytes.size,
-                BitmapFactory.Options().apply { inSampleSize = sample }
-            ) ?: return null
-            val scaled = scaleDown(bmp, MAX_SAVED_DIM)
-            if (scaled !== bmp) bmp.recycle()
-            val name = UUID.randomUUID().toString() + ".jpg"
-            FileOutputStream(File(dir(context), name)).use { out ->
-                scaled.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)
-            }
-            scaled.recycle()
-            name
-        } catch (e: Exception) {
-            null
-        }
+        if (bytes.isEmpty() || bytes.size > 8_000_000) return null
+        return saveJpegBytes(context, bytes, MAX_SAVED_DIM)
     }
 
     fun readBytes(context: Context, name: String): ByteArray? {

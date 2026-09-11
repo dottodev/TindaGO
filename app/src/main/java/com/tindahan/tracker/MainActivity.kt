@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -63,16 +64,12 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
 
     override fun attachBaseContext(newBase: Context) {
-        // Apply saved language (en/tl) very early. Read DataStore synchronously via prefs file fallback:
-        // We store the same value in a tiny SharedPreferences mirror for attach-time access.
-        // SettingsRepository is DataStore; for simplicity read SharedPreferences mirror first.
+        // Apply saved language (en/tl) very early. DataStore can't be read
+        // synchronously here, so a tiny SharedPreferences mirror is kept
+        // in sync (see the LaunchedEffect below).
         val prefs = newBase.getSharedPreferences("locale_mirror", Context.MODE_PRIVATE)
         val lang = prefs.getString("language", null)
-        if (lang == "tl" || lang == "fil") {
-            super.attachBaseContext(wrap(newBase, "tl"))
-        } else {
-            super.attachBaseContext(newBase)
-        }
+        super.attachBaseContext(wrap(newBase, if (lang == "tl" || lang == "fil") "tl" else "en"))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,6 +114,17 @@ private fun TindahanAppContent(app: TindahanApp) {
     androidx.compose.runtime.LaunchedEffect(language) {
         app.getSharedPreferences("locale_mirror", Context.MODE_PRIVATE)
             .edit().putString("language", language).apply()
+    }
+
+    // Changing language swaps string resources, which only take effect after
+    // recreation. Without this the UI would stay in the old language.
+    val activity = LocalContext.current as? android.app.Activity
+    androidx.compose.runtime.LaunchedEffect(language, activity) {
+        val target = if (language == "tl") "tl" else "en"
+        val current = activity?.resources?.configuration?.locales?.get(0)?.language
+        if (activity != null && current != null && current != target) {
+            activity.recreate()
+        }
     }
 
     TindahanTheme(themeMode = theme) {
