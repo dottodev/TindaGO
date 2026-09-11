@@ -20,6 +20,7 @@
     <string name="nav_stock">Stock</string>
     <string name="nav_tracker">Tracker</string>
     <string name="nav_more">More</string>
+    <string name="nav_calculator">Calc</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_product_details">Product Details</string>
 
@@ -129,7 +130,7 @@
     <string name="export_sales">Sales</string>
     <string name="export_utang">Utang</string>
     <string name="export_expenses">Expenses</string>
-    <string name="about_text">Tinda GO v1.2.0\nSimple, fast, offline-first tracking for small businesses.\nYour business data stays on this phone.</string>
+    <string name="about_text">Tinda GO v1.3.0\nSimple, fast, offline-first tracking for small businesses.\nYour business data stays on this phone.</string>
     <string name="help_text">1. Add products in Stock.\n2. Tap SELL to record a sale, RESTOCK to add stock.\n3. Track customer utang in Tracker → UTANG.\n4. Track costs in Tracker → EXPENSES.\n5. Back up your data in More → Backup &amp; Restore.</string>
 
     <!-- Common -->
@@ -168,4 +169,10 @@
     <!-- Calculator -->
     <string name="calculator">Calculator</string>
     <string name="calculator_hint">Quick math for prices and change.</string>
+
+    <!-- Greeting + intro replay -->
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="replay_intro">View introduction</string>
 </resources>

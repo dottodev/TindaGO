@@ -21,10 +21,12 @@ Core philosophy: **Open → Understand → Tap → Done.**
   notes) and **expenses** with categories and notes
 - **Dashboard** – today's sales & expenses, outstanding utang, inventory value,
   honest profit estimate (shows "unavailable" when cost data is missing)
-- **Calculator** – built-in quick calculator for prices and change (More tab)
+- **Calculator** – its own bottom tab for quick math on prices and change
 - **Backup & Restore** – local JSON backup/restore, no account, no cloud
 - **CSV export** – products, sales, utang, expenses via the system file picker
 - English + Filipino (Tagalog) UI, dark / light / system theme
+- Bottom navigation: Stock, Tracker, Calc, More; replayable introduction
+  (More → Help → View introduction)
 - 100% offline – no `INTERNET` permission, no analytics, no ads, no tracking
 
 ## Tech stack

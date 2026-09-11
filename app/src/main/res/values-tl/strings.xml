@@ -16,6 +16,7 @@
     <string name="nav_stock">Paninda</string>
     <string name="nav_tracker">Listahan</string>
     <string name="nav_more">Iba pa</string>
+    <string name="nav_calculator">Calc</string>
     <string name="nav_dashboard">Buod</string>
     <string name="nav_product_details">Detalye ng Produkto</string>
     <string name="inventory_value">Halaga ng Paninda</string>
@@ -113,7 +114,7 @@
     <string name="export_sales">Mga Benta</string>
     <string name="export_utang">Mga Utang</string>
     <string name="export_expenses">Mga Gastos</string>
-    <string name="about_text">Tinda GO v1.2.0\nSimple, mabilis, offline-first.\nAng datos mo ay nasa phone mo lang.</string>
+    <string name="about_text">Tinda GO v1.3.0\nSimple, mabilis, offline-first.\nAng datos mo ay nasa phone mo lang.</string>
     <string name="help_text">1. Magdagdag ng produkto sa Paninda.\n2. Pindutin ang Benta para magbenta, Dagdagan para mag-restock.\n3. I-track ang utang sa Listahan → UTANG.\n4. I-track ang gastos sa Listahan → GASTOS.\n5. Mag-backup sa Iba pa → Backup at Restore.</string>
     <string name="required">Kailangan</string>
     <string name="invalid_amount">Maglagay ng tamang halaga</string>
@@ -151,4 +152,10 @@
     <!-- Calculator -->
     <string name="calculator">Calculator</string>
     <string name="calculator_hint">Mabilisang kwenta para sa presyo at sukli.</string>
+
+    <!-- Greeting + intro replay -->
+    <string name="greeting_morning">Magandang umaga</string>
+    <string name="greeting_afternoon">Magandang hapon</string>
+    <string name="greeting_evening">Magandang gabi</string>
+    <string name="replay_intro">Tingnan ang introduksyon</string>
 </resources>

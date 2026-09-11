@@ -8,6 +8,9 @@ import android.util.LruCache
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
+import java.util.concurrent.Executors
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.withContext
 
 /**
  * Local-only product images. Files live in the app-private product_images dir
@@ -25,6 +28,9 @@ object ImageStore {
         override fun sizeOf(key: String, value: Bitmap): Int =
             (value.byteCount / 1024).coerceAtLeast(1)
     }
+
+    // Capped decoder pool so fast scrolling can't saturate all IO threads.
+    private val decoder = Executors.newFixedThreadPool(2).asCoroutineDispatcher()
 
     fun dir(context: Context): File = File(context.filesDir, DIR_NAME).apply { mkdirs() }
 
@@ -98,26 +104,32 @@ object ImageStore {
         }
     }
 
-    /** Load a downsampled bitmap for display; cached in memory. Call off the main thread. */
-    fun loadThumbnail(context: Context, name: String?, targetPx: Int): Bitmap? {
+    /**
+     * Load a downsampled bitmap for display; main-safe, cached in memory.
+     * Decoding runs on a small dedicated pool to keep scrolling smooth.
+     */
+    suspend fun loadThumbnail(context: Context, name: String?, targetPx: Int): Bitmap? {
         if (name.isNullOrBlank()) return null
         val key = "$name@$targetPx"
         cache.get(key)?.let { return it }
-        return try {
-            val f = File(dir(context), name)
-            if (!f.exists()) return null
-            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeFile(f.absolutePath, bounds)
-            if (bounds.outWidth <= 0) return null
-            val bmp = BitmapFactory.decodeFile(
-                f.absolutePath,
-                BitmapFactory.Options().apply { inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, targetPx) }
-            ) ?: return null
-            // Cap cache memory: skip caching huge bitmaps
-            if (bmp.byteCount < 4_000_000) cache.put(key, bmp)
-            bmp
-        } catch (e: Exception) {
-            null
+        return withContext(decoder) {
+            cache.get(key)?.let { return@withContext it }
+            try {
+                val f = File(dir(context), name)
+                if (!f.exists()) return@withContext null
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeFile(f.absolutePath, bounds)
+                if (bounds.outWidth <= 0) return@withContext null
+                val bmp = BitmapFactory.decodeFile(
+                    f.absolutePath,
+                    BitmapFactory.Options().apply { inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, targetPx) }
+                ) ?: return@withContext null
+                // Cap cache memory: skip caching huge bitmaps
+                if (bmp.byteCount < 4_000_000) cache.put(key, bmp)
+                bmp
+            } catch (e: Exception) {
+                null
+            }
         }
     }
 

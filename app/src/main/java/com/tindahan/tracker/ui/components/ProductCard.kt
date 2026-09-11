@@ -85,7 +85,7 @@ fun ProductCard(
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                ProductImage(imagePath = product.imagePath, size = 56.dp)
+                ProductImage(imagePath = product.imagePath, size = 56.dp, targetPx = 192)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(product.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)

@@ -21,13 +21,16 @@ class TindahanApp : Application() {
         private set
     lateinit var settingsRepository: SettingsRepository
         private set
+    lateinit var adsManager: AppOpenAdManager
+        private set
 
     override fun onCreate() {
         super.onCreate()
+        // SDK init is async; the first ad load is deferred until after the
+        // first frame (see MainActivity) so cold start stays smooth.
         MobileAds.initialize(this) {}
-        val ads = AppOpenAdManager(this)
-        registerActivityLifecycleCallbacks(ads)
-        ads.load()
+        adsManager = AppOpenAdManager(this)
+        registerActivityLifecycleCallbacks(adsManager)
         database = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,

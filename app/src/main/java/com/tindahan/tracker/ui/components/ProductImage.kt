@@ -25,8 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tindahan.tracker.util.ImageStore
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 /**
  * Local product thumbnail. Loads off the main thread with inSampleSize and a
@@ -44,13 +42,7 @@ fun ProductImage(
     var bitmap by remember(imagePath) { mutableStateOf<Bitmap?>(null) }
 
     LaunchedEffect(imagePath) {
-        bitmap = if (imagePath.isNullOrBlank()) {
-            null
-        } else {
-            withContext(Dispatchers.IO) {
-                ImageStore.loadThumbnail(context, imagePath, targetPx)
-            }
-        }
+        bitmap = ImageStore.loadThumbnail(context, imagePath, targetPx)
     }
 
     val bmp = bitmap

@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tindahan.tracker.R
 import com.tindahan.tracker.data.local.entities.Product
@@ -45,11 +46,14 @@ import com.tindahan.tracker.ui.components.StatCard
 import com.tindahan.tracker.util.MoneyUtils
 import com.tindahan.tracker.viewmodel.StockViewModel
 
+private enum class Greeting { MORNING, AFTERNOON, EVENING }
+
 @Composable
 fun StockScreen(
     vm: StockViewModel,
     currency: String,
     defaultThreshold: Int,
+    businessName: String,
     onOpenProduct: (Long) -> Unit,
     onOpenSalesHistory: () -> Unit
 ) {
@@ -87,7 +91,30 @@ fun StockScreen(
             modifier = Modifier.fillMaxSize().padding(pad)
         ) {
             val wide = maxWidth > 600.dp
+            val greeting = remember {
+                when (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) {
+                    in 5..11 -> Greeting.MORNING
+                    in 12..17 -> Greeting.AFTERNOON
+                    else -> Greeting.EVENING
+                }
+            }
+            val greetingText = when (greeting) {
+                Greeting.MORNING -> stringResource(R.string.greeting_morning)
+                Greeting.AFTERNOON -> stringResource(R.string.greeting_afternoon)
+                Greeting.EVENING -> stringResource(R.string.greeting_evening)
+            }
             Column(Modifier.fillMaxSize().padding(16.dp)) {
+                Text(
+                    if (businessName.isBlank()) greetingText else "$greetingText, $businessName",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    com.tindahan.tracker.util.DateUtils.formatDate(System.currentTimeMillis()),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     StatCard(label = stringResource(R.string.inventory_value), value = MoneyUtils.formatCents(invValue, currency), modifier = Modifier.weight(1f))
                     StatCard(label = stringResource(R.string.today_sales), value = MoneyUtils.formatCents(todaySales, currency), modifier = Modifier.weight(1f))

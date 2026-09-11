@@ -48,7 +48,7 @@ import kotlinx.coroutines.launch
 fun MoreScreen(
     vm: SettingsViewModel,
     onOpenDashboard: () -> Unit,
-    onOpenCalculator: () -> Unit
+    onReplayIntro: () -> Unit
 ) {
     val businessName by vm.businessName.collectAsState()
     val theme by vm.theme.collectAsState()
@@ -116,17 +116,10 @@ fun MoreScreen(
             }
         }
         item {
-            Card(
-                onClick = onOpenCalculator,
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.calculator), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                        Text(stringResource(R.string.calculator_hint), style = MaterialTheme.typography.bodySmall)
-                    }
-                }
+            SectionCard(title = stringResource(R.string.help)) {
+                TextButton(onClick = { showHelp = true }) { Text(stringResource(R.string.help)) }
+                TextButton(onClick = { showAbout = true }) { Text(stringResource(R.string.about)) }
+                TextButton(onClick = onReplayIntro) { Text(stringResource(R.string.replay_intro)) }
             }
         }
         item {
@@ -182,12 +175,6 @@ fun MoreScreen(
                 kinds.forEach { (kind, label) ->
                     TextButton(onClick = { pendingExport = kind; createCsvLauncher.launch("$kind.csv") }, modifier = Modifier.fillMaxWidth().height(48.dp)) { Text(label) }
                 }
-            }
-        }
-        item {
-            SectionCard(title = stringResource(R.string.help)) {
-                TextButton(onClick = { showHelp = true }) { Text(stringResource(R.string.help)) }
-                TextButton(onClick = { showAbout = true }) { Text(stringResource(R.string.about)) }
             }
         }
         item {

@@ -3,6 +3,8 @@ package com.tindahan.tracker
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -14,6 +16,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -76,6 +79,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             TindahanAppContent(app)
         }
+        // Load the first ad after the first frame so cold start stays smooth.
+        // Returning from background shows the already-cached ad instantly.
+        Handler(Looper.getMainLooper()).postDelayed({
+            app.adsManager.load()
+        }, 1500)
     }
 
     companion object {
@@ -124,7 +132,7 @@ private fun TindahanAppContent(app: TindahanApp) {
                 bottomBar = {
                     val entry by nav.currentBackStackEntryAsState()
                     val route = entry?.destination?.route
-                    val showBar = route in listOf(Routes.STOCK, Routes.TRACKER, Routes.MORE)
+                    val showBar = route in listOf(Routes.STOCK, Routes.TRACKER, Routes.CALCULATOR, Routes.MORE)
                     if (showBar) {
                         NavigationBar {
                             NavigationBarItem(
@@ -138,6 +146,12 @@ private fun TindahanAppContent(app: TindahanApp) {
                                 onClick = { nav.navigate(Routes.TRACKER) { popUpTo(Routes.STOCK); launchSingleTop = true } },
                                 icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
                                 label = { Text(stringResource(com.tindahan.tracker.R.string.nav_tracker)) }
+                            )
+                            NavigationBarItem(
+                                selected = route == Routes.CALCULATOR,
+                                onClick = { nav.navigate(Routes.CALCULATOR) { popUpTo(Routes.STOCK); launchSingleTop = true } },
+                                icon = { Icon(Icons.Default.Calculate, contentDescription = null) },
+                                label = { Text(stringResource(com.tindahan.tracker.R.string.nav_calculator)) }
                             )
                             NavigationBarItem(
                                 selected = route == Routes.MORE,
@@ -155,7 +169,13 @@ private fun TindahanAppContent(app: TindahanApp) {
                             scope.launch {
                                 if (name != null) settings.setBusinessName(name)
                                 settings.setOnboardingDone(true)
-                                nav.navigate(Routes.STOCK) { popUpTo(Routes.ONBOARDING) { inclusive = true } }
+                                // Replaying the intro from More just goes back;
+                                // first run replaces it with Stock.
+                                if (nav.previousBackStackEntry != null) {
+                                    nav.popBackStack()
+                                } else {
+                                    nav.navigate(Routes.STOCK) { popUpTo(Routes.ONBOARDING) { inclusive = true } }
+                                }
                             }
                         })
                     }
@@ -164,6 +184,7 @@ private fun TindahanAppContent(app: TindahanApp) {
                             vm = stockVm,
                             currency = currency,
                             defaultThreshold = defaultLow,
+                            businessName = businessName,
                             onOpenProduct = { nav.navigate(Routes.productDetails(it)) },
                             onOpenSalesHistory = { nav.navigate(Routes.SALES_HISTORY) }
                         )
@@ -175,7 +196,7 @@ private fun TindahanAppContent(app: TindahanApp) {
                         MoreScreen(
                             settingsVm,
                             onOpenDashboard = { nav.navigate(Routes.DASHBOARD) },
-                            onOpenCalculator = { nav.navigate(Routes.CALCULATOR) }
+                            onReplayIntro = { nav.navigate(Routes.ONBOARDING) }
                         )
                     }
                     composable(

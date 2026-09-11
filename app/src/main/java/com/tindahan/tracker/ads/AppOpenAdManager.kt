@@ -23,6 +23,7 @@ class AppOpenAdManager(private val app: Application) : Application.ActivityLifec
 
     private var ad: AppOpenAd? = null
     private var isShowing = false
+    private var isLoading = false
     private var loadTime = 0L
     private var lastShown = 0L
     private var backgroundedAt = 0L
@@ -30,7 +31,8 @@ class AppOpenAdManager(private val app: Application) : Application.ActivityLifec
     private var firstStart = true
 
     fun load() {
-        if (ad != null || isShowing) return
+        if (ad != null || isShowing || isLoading) return
+        isLoading = true
         AppOpenAd.load(
             app,
             AD_UNIT_ID,
@@ -39,10 +41,12 @@ class AppOpenAdManager(private val app: Application) : Application.ActivityLifec
                 override fun onAdLoaded(ad: AppOpenAd) {
                     this@AppOpenAdManager.ad = ad
                     loadTime = System.currentTimeMillis()
+                    isLoading = false
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     this@AppOpenAdManager.ad = null
+                    isLoading = false
                 }
             }
         )
