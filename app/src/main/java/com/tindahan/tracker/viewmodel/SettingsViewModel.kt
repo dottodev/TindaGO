@@ -54,6 +54,7 @@ class SettingsViewModel(
             }
             "sales" -> "sales.csv" to CsvUtils.salesCsv(repo.getAllSalesOnce())
             "utang" -> "utang.csv" to CsvUtils.utangCsv(repo.getAllUtangOnce())
+            "notes" -> "notes.csv" to CsvUtils.notesCsv(repo.getAllNotesOnce())
             else -> "expenses.csv" to CsvUtils.expensesCsv(repo.getAllExpensesOnce())
         }
     }

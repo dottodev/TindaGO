@@ -35,13 +35,14 @@ class TindahanApp : Application() {
             applicationContext,
             AppDatabase::class.java,
             AppDatabase.DB_NAME
-        ).addMigrations(AppDatabase.MIGRATION_1_2).build()
+        ).addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3).build()
         repository = TindahanRepository(
             database.productDao(),
             database.saleDao(),
             database.stockMovementDao(),
             database.utangDao(),
             database.expenseDao(),
+            database.noteDao(),
             applicationContext
         )
         settingsRepository = SettingsRepository(applicationContext.dataStore)

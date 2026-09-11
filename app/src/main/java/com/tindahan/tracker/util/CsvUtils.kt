@@ -1,6 +1,7 @@
 package com.tindahan.tracker.util
 
 import com.tindahan.tracker.data.local.entities.Expense
+import com.tindahan.tracker.data.local.entities.Note
 import com.tindahan.tracker.data.local.entities.Product
 import com.tindahan.tracker.data.local.entities.Sale
 import com.tindahan.tracker.data.local.entities.StockMovement
@@ -69,6 +70,18 @@ object CsvUtils {
                 .append(e.timestamp).append(',')
                 .append(esc(e.category)).append(',')
                 .append(esc(e.notes ?: "")).append('\n')
+        }
+        return sb.toString()
+    }
+
+    fun notesCsv(items: List<Note>): String {
+        val sb = StringBuilder("id,title,body,timestamp,updated_at\n")
+        for (n in items) {
+            sb.append(n.id).append(',')
+                .append(esc(n.title)).append(',')
+                .append(esc(n.body)).append(',')
+                .append(n.timestamp).append(',')
+                .append(n.updatedAt).append('\n')
         }
         return sb.toString()
     }

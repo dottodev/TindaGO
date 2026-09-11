@@ -9,6 +9,7 @@ object Routes {
     const val SALES_HISTORY = "sales_history"
     const val ONBOARDING = "onboarding"
     const val CALCULATOR = "calculator"
+    const val NOTES = "notes"
 
     fun productDetails(id: Long) = "product/$id"
 }

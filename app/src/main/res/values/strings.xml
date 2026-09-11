@@ -21,6 +21,7 @@
     <string name="nav_tracker">Tracker</string>
     <string name="nav_more">More</string>
     <string name="nav_calculator">Calc</string>
+    <string name="nav_notes">Notes</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_product_details">Product Details</string>
 
@@ -130,7 +131,7 @@
     <string name="export_sales">Sales</string>
     <string name="export_utang">Utang</string>
     <string name="export_expenses">Expenses</string>
-    <string name="about_text">Tinda GO v1.3.0\nSimple, fast, offline-first tracking for small businesses.\nYour business data stays on this phone.</string>
+    <string name="about_text">Tinda GO v1.4.0\nSimple, fast, offline-first tracking for small businesses.\nYour business data stays on this phone.</string>
     <string name="help_text">1. Add products in Stock.\n2. Tap SELL to record a sale, RESTOCK to add stock.\n3. Track customer utang in Tracker → UTANG.\n4. Track costs in Tracker → EXPENSES.\n5. Back up your data in More → Backup &amp; Restore.</string>
 
     <!-- Common -->
@@ -175,4 +176,19 @@
     <string name="greeting_afternoon">Good afternoon</string>
     <string name="greeting_evening">Good evening</string>
     <string name="replay_intro">View introduction</string>
+
+    <!-- Notes tab -->
+    <string name="notes_title">Notes</string>
+    <string name="add_note">Add Note</string>
+    <string name="edit_note">Edit Note</string>
+    <string name="note_title">Title</string>
+    <string name="note_body">Note</string>
+    <string name="note_untitled">Untitled</string>
+    <string name="note_required">Write something first.</string>
+    <string name="search_notes">Search notes</string>
+    <string name="no_notes">No notes yet.</string>
+    <string name="no_notes_hint">Jot down reminders, price lists, or anything for your store.</string>
+    <string name="delete_note_confirm">Delete this note?</string>
+    <string name="export_notes">Notes</string>
+    <string name="photo_error">Couldn\'t load that photo. Please try another.</string>
 </resources>

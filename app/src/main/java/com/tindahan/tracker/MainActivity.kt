@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -42,6 +43,7 @@ import com.tindahan.tracker.ui.navigation.Routes
 import com.tindahan.tracker.ui.screens.CalculatorScreen
 import com.tindahan.tracker.ui.screens.DashboardScreen
 import com.tindahan.tracker.ui.screens.MoreScreen
+import com.tindahan.tracker.ui.screens.NotesScreen
 import com.tindahan.tracker.ui.screens.OnboardingScreen
 import com.tindahan.tracker.ui.screens.ProductDetailsScreen
 import com.tindahan.tracker.ui.screens.SalesHistoryScreen
@@ -50,6 +52,7 @@ import com.tindahan.tracker.ui.screens.TrackerScreen
 import com.tindahan.tracker.ui.theme.TindahanTheme
 import com.tindahan.tracker.viewmodel.DashboardViewModel
 import com.tindahan.tracker.viewmodel.ExpenseViewModel
+import com.tindahan.tracker.viewmodel.NotesViewModel
 import com.tindahan.tracker.viewmodel.ProductDetailsViewModel
 import com.tindahan.tracker.viewmodel.SettingsViewModel
 import com.tindahan.tracker.viewmodel.StockViewModel
@@ -123,6 +126,7 @@ private fun TindahanAppContent(app: TindahanApp) {
         val expenseVm: ExpenseViewModel = viewModel(factory = ExpenseViewModel.Factory(repo))
         val settingsVm: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory(repo, settings))
         val dashboardVm: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory(repo))
+        val notesVm: NotesViewModel = viewModel(factory = NotesViewModel.Factory(repo))
 
         // Keep onboarding as start destination when not done
         val start = if (onboardingDone) Routes.STOCK else Routes.ONBOARDING
@@ -132,7 +136,7 @@ private fun TindahanAppContent(app: TindahanApp) {
                 bottomBar = {
                     val entry by nav.currentBackStackEntryAsState()
                     val route = entry?.destination?.route
-                    val showBar = route in listOf(Routes.STOCK, Routes.TRACKER, Routes.CALCULATOR, Routes.MORE)
+                    val showBar = route in listOf(Routes.STOCK, Routes.TRACKER, Routes.CALCULATOR, Routes.NOTES, Routes.MORE)
                     if (showBar) {
                         NavigationBar {
                             NavigationBarItem(
@@ -152,6 +156,12 @@ private fun TindahanAppContent(app: TindahanApp) {
                                 onClick = { nav.navigate(Routes.CALCULATOR) { popUpTo(Routes.STOCK); launchSingleTop = true } },
                                 icon = { Icon(Icons.Default.Calculate, contentDescription = null) },
                                 label = { Text(stringResource(com.tindahan.tracker.R.string.nav_calculator)) }
+                            )
+                            NavigationBarItem(
+                                selected = route == Routes.NOTES,
+                                onClick = { nav.navigate(Routes.NOTES) { popUpTo(Routes.STOCK); launchSingleTop = true } },
+                                icon = { Icon(Icons.Default.Description, contentDescription = null) },
+                                label = { Text(stringResource(com.tindahan.tracker.R.string.nav_notes)) }
                             )
                             NavigationBarItem(
                                 selected = route == Routes.MORE,
@@ -191,6 +201,9 @@ private fun TindahanAppContent(app: TindahanApp) {
                     }
                     composable(Routes.TRACKER) {
                         TrackerScreen(utangVm, expenseVm, currency, businessName)
+                    }
+                    composable(Routes.NOTES) {
+                        NotesScreen(notesVm)
                     }
                     composable(Routes.MORE) {
                         MoreScreen(

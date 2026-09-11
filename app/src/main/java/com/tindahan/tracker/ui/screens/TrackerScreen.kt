@@ -79,8 +79,7 @@ fun TrackerScreen(
 }
 
 @Composable
-private fun UtangTab(vm: UtangViewModel, currency: String, businessName: String) {
-    val items by vm.items.collectAsState()
+private fun UtangTab(vm: UtangViewModel, currency: String, businessName: String) {    val items by vm.items.collectAsState()
     val query by vm.query.collectAsState()
     val unpaid by vm.unpaidTotal.collectAsState()
     val paid by vm.paidTotal.collectAsState()
@@ -89,7 +88,7 @@ private fun UtangTab(vm: UtangViewModel, currency: String, businessName: String)
     var deleteId by remember { mutableStateOf<Long?>(null) }
     val context = LocalContext.current
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             StatCard(label = stringResource(R.string.unpaid_utang), value = MoneyUtils.formatCents(unpaid, currency), modifier = Modifier.weight(1f))
             StatCard(label = stringResource(R.string.paid_utang), value = MoneyUtils.formatCents(paid, currency), modifier = Modifier.weight(1f))
@@ -116,7 +115,7 @@ private fun UtangTab(vm: UtangViewModel, currency: String, businessName: String)
         if (items.isEmpty()) {
             EmptyState(title = stringResource(R.string.no_unpaid_utang), hint = stringResource(R.string.no_utang_hint))
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
                 items(items, key = { it.id }) { u ->
                     UtangCard(
                         item = u,
@@ -155,7 +154,7 @@ private fun ExpensesTab(vm: ExpenseViewModel, currency: String) {
     var showAdd by remember { mutableStateOf(false) }
     var deleteId by remember { mutableStateOf<Long?>(null) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             StatCard(label = stringResource(R.string.today_expenses), value = MoneyUtils.formatCents(today, currency), modifier = Modifier.weight(1f))
             StatCard(label = stringResource(R.string.month_expenses), value = MoneyUtils.formatCents(month, currency), modifier = Modifier.weight(1f))
@@ -168,7 +167,7 @@ private fun ExpensesTab(vm: ExpenseViewModel, currency: String) {
         if (items.isEmpty()) {
             EmptyState(title = stringResource(R.string.no_expenses), hint = stringResource(R.string.no_expenses_hint))
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
                 items(items, key = { it.id }) { e ->
                     ExpenseCard(item = e, currency = currency, onDelete = { deleteId = e.id })
                 }

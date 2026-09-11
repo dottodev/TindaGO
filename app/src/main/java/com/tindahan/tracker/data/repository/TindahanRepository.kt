@@ -2,11 +2,13 @@ package com.tindahan.tracker.data.repository
 
 import android.content.Context
 import com.tindahan.tracker.data.local.dao.ExpenseDao
+import com.tindahan.tracker.data.local.dao.NoteDao
 import com.tindahan.tracker.data.local.dao.ProductDao
 import com.tindahan.tracker.data.local.dao.SaleDao
 import com.tindahan.tracker.data.local.dao.StockMovementDao
 import com.tindahan.tracker.data.local.dao.UtangDao
 import com.tindahan.tracker.data.local.entities.Expense
+import com.tindahan.tracker.data.local.entities.Note
 import com.tindahan.tracker.data.local.entities.Product
 import com.tindahan.tracker.data.local.entities.Sale
 import com.tindahan.tracker.data.local.entities.StockMovement
@@ -23,6 +25,7 @@ class TindahanRepository(
     private val movementDao: StockMovementDao,
     private val utangDao: UtangDao,
     private val expenseDao: ExpenseDao,
+    private val noteDao: NoteDao,
     appContext: Context
 ) {
     private val appContext = appContext.applicationContext
@@ -187,6 +190,27 @@ class TindahanRepository(
 
     suspend fun deleteExpense(e: Expense) = expenseDao.delete(e)
     suspend fun getAllExpensesOnce(): List<Expense> = expenseDao.getAllOnce()
+
+    // ---- Notes ----
+    fun observeNotes(): Flow<List<Note>> = noteDao.observeAll()
+    fun searchNotes(q: String): Flow<List<Note>> =
+        if (q.isBlank()) noteDao.observeAll() else noteDao.search(q.trim())
+    fun observeNoteCount(): Flow<Int> = noteDao.observeCount()
+
+    suspend fun addNote(title: String, body: String): Result<Long> {
+        if (title.isBlank() && body.isBlank()) return Result.failure(IllegalArgumentException("empty"))
+        val now = System.currentTimeMillis()
+        return Result.success(noteDao.insert(Note(0, title.trim(), body.trim(), now, now)))
+    }
+
+    suspend fun updateNote(n: Note): Result<Unit> {
+        if (n.title.isBlank() && n.body.isBlank()) return Result.failure(IllegalArgumentException("empty"))
+        noteDao.update(n.copy(updatedAt = System.currentTimeMillis()))
+        return Result.success(Unit)
+    }
+
+    suspend fun deleteNote(n: Note) = noteDao.delete(n)
+    suspend fun getAllNotesOnce(): List<Note> = noteDao.getAllOnce()
     suspend fun getAllProductsOnceBlocking(): List<Product> {
         // Used for backup/export/dashboard profit estimate; collect via DAO not exposed as suspend-all,
         // so caller should use Flow.first(). Provided here via observeAll callers.
@@ -200,10 +224,11 @@ class TindahanRepository(
         val movements = movementDao.getAllOnce()
         val utang = utangDao.getAllOnce()
         val expenses = expenseDao.getAllOnce()
+        val notes = noteDao.getAllOnce()
         // products need a suspend getter; use a direct query path via search-like flow is not ideal,
         // so we query through productDao.observeAll is Flow; repository callers pass products in.
         // To keep this method self-contained we throw if not supplied — instead use buildBackupWithProducts.
-        return BackupData(BackupUtils.BACKUP_VERSION, System.currentTimeMillis(), businessName, emptyList(), sales, movements, utang, expenses)
+        return BackupData(BackupUtils.BACKUP_VERSION, System.currentTimeMillis(), businessName, emptyList(), sales, movements, utang, expenses, notes)
     }
 
     /** Full backup assembly including Base64-embedded product images (local-only). */
@@ -241,5 +266,6 @@ class TindahanRepository(
         for (m in data.movements) movementDao.insert(m.copy(id = 0))
         for (u in data.utang) utangDao.insert(u.copy(id = 0))
         for (e in data.expenses) expenseDao.insert(e.copy(id = 0))
+        for (n in data.notes) noteDao.insert(n.copy(id = 0))
     }
 }

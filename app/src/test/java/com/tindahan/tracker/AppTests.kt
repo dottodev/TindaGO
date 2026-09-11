@@ -1,6 +1,7 @@
 package com.tindahan.tracker
 
 import com.tindahan.tracker.data.local.entities.Expense
+import com.tindahan.tracker.data.local.entities.Note
 import com.tindahan.tracker.data.local.entities.Product
 import com.tindahan.tracker.data.local.entities.Sale
 import com.tindahan.tracker.data.local.entities.StockState
@@ -161,6 +162,12 @@ class CsvExportTest {
         val csv = CsvUtils.expensesCsv(listOf(Expense(1, "Stock", 5000, 0, "Stock", null)))
         assertTrue(csv.contains("Stock"))
     }
+
+    @Test fun notes_csv() {
+        val csv = CsvUtils.notesCsv(listOf(Note(1, "Reminder", "Buy ice", 0, 0)))
+        assertTrue(csv.contains("Reminder"))
+        assertTrue(csv.contains("Buy ice"))
+    }
 }
 
 class BackupRestoreTest {
@@ -170,7 +177,8 @@ class BackupRestoreTest {
         listOf(Sale(0, null, "Coke", 1, 2000, 2000, 0)),
         emptyList(),
         listOf(Utang(0, "Juan", "", 25000, 0, null, false, null)),
-        listOf(Expense(0, "Stock", 5000, 0, "Stock", null))
+        listOf(Expense(0, "Stock", 5000, 0, "Stock", null)),
+        listOf(Note(0, "Reminder", "Buy ice", 0, 0))
     )
 
     @Test fun roundtrip() {
@@ -181,6 +189,8 @@ class BackupRestoreTest {
         assertEquals(1, data.products.size)
         assertEquals("Coke", data.products[0].product.name)
         assertEquals("Juan's Store", data.businessName)
+        assertEquals(1, data.notes.size)
+        assertEquals("Reminder", data.notes[0].title)
     }
 
     @Test fun invalid_file() {

@@ -17,6 +17,7 @@
     <string name="nav_tracker">Listahan</string>
     <string name="nav_more">Iba pa</string>
     <string name="nav_calculator">Calc</string>
+    <string name="nav_notes">Tala</string>
     <string name="nav_dashboard">Buod</string>
     <string name="nav_product_details">Detalye ng Produkto</string>
     <string name="inventory_value">Halaga ng Paninda</string>
@@ -114,7 +115,7 @@
     <string name="export_sales">Mga Benta</string>
     <string name="export_utang">Mga Utang</string>
     <string name="export_expenses">Mga Gastos</string>
-    <string name="about_text">Tinda GO v1.3.0\nSimple, mabilis, offline-first.\nAng datos mo ay nasa phone mo lang.</string>
+    <string name="about_text">Tinda GO v1.4.0\nSimple, mabilis, offline-first.\nAng datos mo ay nasa phone mo lang.</string>
     <string name="help_text">1. Magdagdag ng produkto sa Paninda.\n2. Pindutin ang Benta para magbenta, Dagdagan para mag-restock.\n3. I-track ang utang sa Listahan → UTANG.\n4. I-track ang gastos sa Listahan → GASTOS.\n5. Mag-backup sa Iba pa → Backup at Restore.</string>
     <string name="required">Kailangan</string>
     <string name="invalid_amount">Maglagay ng tamang halaga</string>
@@ -158,4 +159,19 @@
     <string name="greeting_afternoon">Magandang hapon</string>
     <string name="greeting_evening">Magandang gabi</string>
     <string name="replay_intro">Tingnan ang introduksyon</string>
+
+    <!-- Notes tab -->
+    <string name="notes_title">Mga Tala</string>
+    <string name="add_note">Magdagdag ng Tala</string>
+    <string name="edit_note">Ayusin ang Tala</string>
+    <string name="note_title">Pamagat</string>
+    <string name="note_body">Tala</string>
+    <string name="note_untitled">Walang pamagat</string>
+    <string name="note_required">Magsulat muna ng kahit ano.</string>
+    <string name="search_notes">Hanapin sa mga tala</string>
+    <string name="no_notes">Wala pang tala.</string>
+    <string name="no_notes_hint">Isulat ang paalala, listahan ng presyo, o kahit ano para sa tindahan.</string>
+    <string name="delete_note_confirm">Burahin ang talang ito?</string>
+    <string name="export_notes">Mga Tala</string>
+    <string name="photo_error">Hindi maload ang larawan. Subukan ang iba.</string>
 </resources>

@@ -171,7 +171,13 @@ fun MoreScreen(
         }
         item {
             SectionCard(title = stringResource(R.string.export_data)) {
-                val kinds = listOf("products" to stringResource(R.string.export_products), "sales" to stringResource(R.string.export_sales), "utang" to stringResource(R.string.export_utang), "expenses" to stringResource(R.string.export_expenses))
+                val kinds = listOf(
+                    "products" to stringResource(R.string.export_products),
+                    "sales" to stringResource(R.string.export_sales),
+                    "utang" to stringResource(R.string.export_utang),
+                    "expenses" to stringResource(R.string.export_expenses),
+                    "notes" to stringResource(R.string.export_notes)
+                )
                 kinds.forEach { (kind, label) ->
                     TextButton(onClick = { pendingExport = kind; createCsvLauncher.launch("$kind.csv") }, modifier = Modifier.fillMaxWidth().height(48.dp)) { Text(label) }
                 }

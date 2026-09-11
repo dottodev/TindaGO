@@ -5,6 +5,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.tindahan.tracker.data.local.entities.Expense
+import com.tindahan.tracker.data.local.entities.Note
 import com.tindahan.tracker.data.local.entities.Product
 import com.tindahan.tracker.data.local.entities.Sale
 import com.tindahan.tracker.data.local.entities.StockMovement
@@ -24,7 +25,8 @@ data class BackupData(
     val sales: List<Sale>,
     val movements: List<StockMovement>,
     val utang: List<Utang>,
-    val expenses: List<Expense>
+    val expenses: List<Expense>,
+    val notes: List<Note> = emptyList()
 )
 
 object BackupUtils {
@@ -140,6 +142,18 @@ object BackupUtils {
             ej.add(o)
         }
         root.add("expenses", ej)
+
+        val nj = JsonArray()
+        for (n in data.notes) {
+            val o = JsonObject()
+            o.addProperty("id", n.id)
+            o.addProperty("title", n.title)
+            o.addProperty("body", n.body)
+            o.addProperty("timestamp", n.timestamp)
+            o.addProperty("updatedAt", n.updatedAt)
+            nj.add(o)
+        }
+        root.add("notes", nj)
         return gson.toJson(root)
     }
 
@@ -241,7 +255,17 @@ object BackupUtils {
                 expenses.add(Expense(0, desc, amt, optLong(o, "timestamp", System.currentTimeMillis()), optString(o, "category", "Other").ifBlank { "Other" }, notes))
             }
 
-            ParseResult.Success(BackupData(version, exportedAt, businessName, products, sales, movements, utangs, expenses))
+            val notes = mutableListOf<Note>()
+            for (el in optArray(root, "notes")) {
+                if (!el.isJsonObject) continue
+                val o = el.asJsonObject
+                val title = optString(o, "title", "")
+                val body = optString(o, "body", "")
+                if (title.isBlank() && body.isBlank()) continue
+                notes.add(Note(0, title, body, optLong(o, "timestamp", System.currentTimeMillis()), optLong(o, "updatedAt", System.currentTimeMillis())))
+            }
+
+            ParseResult.Success(BackupData(version, exportedAt, businessName, products, sales, movements, utangs, expenses, notes))
         } catch (e: Exception) {
             ParseResult.Failure("Corrupted data")
         }

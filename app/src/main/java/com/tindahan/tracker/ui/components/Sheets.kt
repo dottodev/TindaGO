@@ -39,7 +39,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -72,15 +71,25 @@ import java.io.File
 fun ImagePickerRow(
     imageName: String?,
     onImageStaged: (String?) -> Unit,
+    onError: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
-        uri?.let { onImageStaged(ImageStore.saveFromUri(context, it)) }
+        if (uri == null) return@rememberLauncherForActivityResult
+        val saved = ImageStore.saveFromUri(context, uri)
+        if (saved == null) onError() else onImageStaged(saved)
     }
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok: Boolean ->
-        if (ok) cameraUri?.let { onImageStaged(ImageStore.saveFromUri(context, it)) }
+        if (!ok) return@rememberLauncherForActivityResult
+        val uri = cameraUri
+        if (uri == null) {
+            onError()
+            return@rememberLauncherForActivityResult
+        }
+        val saved = ImageStore.saveFromUri(context, uri)
+        if (saved == null) onError() else onImageStaged(saved)
     }
 
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -98,10 +107,14 @@ fun ImagePickerRow(
                 }
                 OutlinedButton(
                     onClick = {
-                        val tmp = File(context.cacheDir, "camera_tmp.jpg")
-                        val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", tmp)
-                        cameraUri = uri
-                        camera.launch(uri)
+                        try {
+                            val tmp = File(context.cacheDir, "camera_tmp.jpg")
+                            val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", tmp)
+                            cameraUri = uri
+                            camera.launch(uri)
+                        } catch (e: Exception) {
+                            onError()
+                        }
                     },
                     modifier = Modifier.weight(1f).height(48.dp)
                 ) {
@@ -125,31 +138,42 @@ fun ImagePickerRow(
     }
 }
 
-/** Tracks a staged image file and deletes it if the sheet is cancelled. */
+/**
+ * Tracks a staged image file. Call [StagedImage.commit] on save and
+ * [StagedImage.cancel] when the sheet is dismissed without saving so staged
+ * files don't leak. Explicit cancel (instead of dispose cleanup) survives
+ * screen rotation.
+ */
 @Composable
-fun rememberStagedImage(initial: String?): Triple<String?, (String?) -> Unit, () -> Unit> {
+fun rememberStagedImage(initial: String?): StagedImage {
     val context = LocalContext.current
     var imageName by remember { mutableStateOf(initial) }
     var committed by remember { mutableStateOf(false) }
-    DisposableEffect(Unit) {
-        onDispose {
-            if (!committed && imageName != null && imageName != initial) {
-                ImageStore.delete(context, imageName)
+    return remember {
+        object : StagedImage {
+            override val current: String? get() = imageName
+            override fun stage(staged: String?) {
+                val prev = imageName
+                imageName = staged
+                // Delete replaced staged files right away (never the original).
+                if (prev != null && prev != initial && prev != staged) ImageStore.delete(context, prev)
+                if (staged == null && prev != null && prev != initial) ImageStore.delete(context, prev)
+            }
+            override fun commit() { committed = true }
+            override fun cancel() {
+                if (!committed && imageName != null && imageName != initial) {
+                    ImageStore.delete(context, imageName)
+                }
             }
         }
     }
-    return Triple(
-        imageName,
-        { staged ->
-            val prev = imageName
-            imageName = staged
-            // Delete the previously staged file right away (never the original).
-            if (prev != null && prev != initial && prev != staged) ImageStore.delete(context, prev)
-            // If user removed a staged pick, delete it too.
-            if (staged == null && prev != null && prev != initial) ImageStore.delete(context, prev)
-        },
-        { committed = true }
-    )
+}
+
+interface StagedImage {
+    val current: String?
+    fun stage(staged: String?)
+    fun commit()
+    fun cancel()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -166,15 +190,25 @@ fun AddProductSheet(
     var thr by remember { mutableStateOf(defaultThreshold.toString()) }
     var notes by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
-    val (imageName, stageImage, commitImage) = rememberStagedImage(null)
+    var photoError by remember { mutableStateOf(false) }
+    val staged = rememberStagedImage(null)
     val invalidNumber = stringResource(R.string.invalid_number)
     val invalidAmount = stringResource(R.string.invalid_amount)
+    val dismiss = { staged.cancel(); onDismiss() }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ModalBottomSheet(onDismissRequest = dismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.padding(20.dp).imePadding().verticalScroll(rememberScrollState())) {
             Text(stringResource(R.string.add_product), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
-            ImagePickerRow(imageName = imageName, onImageStaged = stageImage)
+            ImagePickerRow(
+                imageName = staged.current,
+                onImageStaged = { staged.stage(it); photoError = false },
+                onError = { photoError = true }
+            )
+            if (photoError) {
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.photo_error), color = MaterialTheme.colorScheme.error)
+            }
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.product_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
@@ -194,7 +228,7 @@ fun AddProductSheet(
             }
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                TextButton(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp)) { Text(stringResource(R.string.cancel)) }
+                TextButton(onClick = dismiss, modifier = Modifier.weight(1f).height(48.dp)) { Text(stringResource(R.string.cancel)) }
                 Button(
                     onClick = {
                         if (name.isBlank()) { error = invalidNumber; return@Button }
@@ -205,8 +239,8 @@ fun AddProductSheet(
                         val q = MoneyUtils.parseQuantity(qty)
                         val t = MoneyUtils.parseQuantity(thr)
                         if (q == null || t == null) { error = invalidNumber; return@Button }
-                        commitImage()
-                        onSave(name.trim(), s, c, q, t, imageName, notes.ifBlank { null })
+                        staged.commit()
+                        onSave(name.trim(), s, c, q, t, staged.current, notes.ifBlank { null })
                     },
                     modifier = Modifier.weight(1f).height(48.dp)
                 ) { Text(stringResource(R.string.save)) }
@@ -230,15 +264,25 @@ fun EditProductSheet(
     var thr by remember { mutableStateOf(product.lowStockThreshold.toString()) }
     var notes by remember { mutableStateOf(product.notes ?: "") }
     var error by remember { mutableStateOf<String?>(null) }
-    val (imageName, stageImage, commitImage) = rememberStagedImage(product.imagePath)
+    var photoError by remember { mutableStateOf(false) }
+    val staged = rememberStagedImage(product.imagePath)
     val invalidNumber = stringResource(R.string.invalid_number)
     val invalidAmount = stringResource(R.string.invalid_amount)
+    val dismiss = { staged.cancel(); onDismiss() }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ModalBottomSheet(onDismissRequest = dismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.padding(20.dp).imePadding().verticalScroll(rememberScrollState())) {
             Text(stringResource(R.string.edit_product), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
-            ImagePickerRow(imageName = imageName, onImageStaged = stageImage)
+            ImagePickerRow(
+                imageName = staged.current,
+                onImageStaged = { staged.stage(it); photoError = false },
+                onError = { photoError = true }
+            )
+            if (photoError) {
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.photo_error), color = MaterialTheme.colorScheme.error)
+            }
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.product_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
@@ -258,7 +302,7 @@ fun EditProductSheet(
             }
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                TextButton(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp)) { Text(stringResource(R.string.cancel)) }
+                TextButton(onClick = dismiss, modifier = Modifier.weight(1f).height(48.dp)) { Text(stringResource(R.string.cancel)) }
                 Button(
                     onClick = {
                         if (name.isBlank()) { error = invalidNumber; return@Button }
@@ -269,8 +313,8 @@ fun EditProductSheet(
                         val q = MoneyUtils.parseQuantity(qty)
                         val t = MoneyUtils.parseQuantity(thr)
                         if (q == null || t == null) { error = invalidNumber; return@Button }
-                        commitImage()
-                        onSave(name.trim(), s, c, q, t, imageName, notes.ifBlank { null })
+                        staged.commit()
+                        onSave(name.trim(), s, c, q, t, staged.current, notes.ifBlank { null })
                     },
                     modifier = Modifier.weight(1f).height(48.dp)
                 ) { Text(stringResource(R.string.save)) }
