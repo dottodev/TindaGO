@@ -14,8 +14,8 @@ android {
         applicationId = "com.tindahan.tracker"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.1.0"
+        versionCode = 5
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -108,6 +108,9 @@ dependencies {
 
     // Pure-JVM JSON for backup (works in app + unit tests without Robolectric)
     implementation("com.google.code.gson:gson:2.11.0")
+
+    // AdMob (App Open ads)
+    implementation("com.google.android.gms:play-services-ads:23.2.0")
 
     // Lifecycle runtime compose is already included
 

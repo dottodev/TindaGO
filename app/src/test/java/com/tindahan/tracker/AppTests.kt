@@ -8,6 +8,7 @@ import com.tindahan.tracker.data.local.entities.Utang
 import com.tindahan.tracker.util.BackupData
 import com.tindahan.tracker.util.BackupProduct
 import com.tindahan.tracker.util.BackupUtils
+import com.tindahan.tracker.util.Calculator
 import com.tindahan.tracker.util.CsvUtils
 import com.tindahan.tracker.util.DateUtils
 import com.tindahan.tracker.util.DiscountType
@@ -292,5 +293,66 @@ class ImageSampleTest {
         assertEquals(4, ImageStore.sampleSize(4000, 3000, 1024))
         assertEquals(1, ImageStore.sampleSize(0, 0, 1024))
         assertEquals(1, ImageStore.sampleSize(100, 100, 0))
+    }
+}
+
+class CalculatorTest {
+    private fun type(s: Calculator.State, text: String): Calculator.State {
+        var cur = s
+        for (c in text) {
+            cur = Calculator.reduce(cur, if (c == '.') Calculator.Key.Dot else Calculator.Key.Digit(c))
+        }
+        return cur
+    }
+
+    @Test fun basic_add() {
+        var s = Calculator.State()
+        s = type(s, "12")
+        s = Calculator.reduce(s, Calculator.Key.Op('+'))
+        s = type(s, "8")
+        s = Calculator.reduce(s, Calculator.Key.Equals)
+        assertEquals("20", s.display)
+    }
+
+    @Test fun chained_ops() {
+        var s = Calculator.State()
+        s = type(s, "10")
+        s = Calculator.reduce(s, Calculator.Key.Op('×'))
+        s = type(s, "5")
+        s = Calculator.reduce(s, Calculator.Key.Op('-'))
+        s = type(s, "7")
+        s = Calculator.reduce(s, Calculator.Key.Equals)
+        assertEquals("43", s.display)
+    }
+
+    @Test fun division_by_zero() {
+        var s = Calculator.State()
+        s = type(s, "5")
+        s = Calculator.reduce(s, Calculator.Key.Op('÷'))
+        s = type(s, "0")
+        s = Calculator.reduce(s, Calculator.Key.Equals)
+        assertEquals("Error", s.display)
+        // typing after error starts fresh
+        s = Calculator.reduce(s, Calculator.Key.Digit('3'))
+        assertEquals("3", s.display)
+    }
+
+    @Test fun percent_negate_back() {
+        var s = type(Calculator.State(), "50")
+        s = Calculator.reduce(s, Calculator.Key.Percent)
+        assertEquals("0.5", s.display)
+        s = Calculator.reduce(s, Calculator.Key.Negate)
+        assertEquals("-0.5", s.display)
+        s = Calculator.reduce(s, Calculator.Key.Back)
+        assertEquals("-0.", s.display)
+    }
+
+    @Test fun decimals() {
+        var s = Calculator.State()
+        s = type(s, "2.5")
+        s = Calculator.reduce(s, Calculator.Key.Op('+'))
+        s = type(s, "2.5")
+        s = Calculator.reduce(s, Calculator.Key.Equals)
+        assertEquals("5", s.display)
     }
 }

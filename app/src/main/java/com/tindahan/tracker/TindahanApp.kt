@@ -6,6 +6,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
+import com.google.android.gms.ads.MobileAds
+import com.tindahan.tracker.ads.AppOpenAdManager
 import com.tindahan.tracker.data.local.AppDatabase
 import com.tindahan.tracker.data.repository.SettingsRepository
 import com.tindahan.tracker.data.repository.TindahanRepository
@@ -22,6 +24,10 @@ class TindahanApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        MobileAds.initialize(this) {}
+        val ads = AppOpenAdManager(this)
+        registerActivityLifecycleCallbacks(ads)
+        ads.load()
         database = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,

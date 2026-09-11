@@ -6,6 +6,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -31,6 +36,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.tindahan.tracker.ui.navigation.Routes
+import com.tindahan.tracker.ui.screens.CalculatorScreen
 import com.tindahan.tracker.ui.screens.DashboardScreen
 import com.tindahan.tracker.ui.screens.MoreScreen
 import com.tindahan.tracker.ui.screens.OnboardingScreen
@@ -166,17 +172,46 @@ private fun TindahanAppContent(app: TindahanApp) {
                         TrackerScreen(utangVm, expenseVm, currency, businessName)
                     }
                     composable(Routes.MORE) {
-                        MoreScreen(settingsVm, onOpenDashboard = { nav.navigate(Routes.DASHBOARD) })
+                        MoreScreen(
+                            settingsVm,
+                            onOpenDashboard = { nav.navigate(Routes.DASHBOARD) },
+                            onOpenCalculator = { nav.navigate(Routes.CALCULATOR) }
+                        )
                     }
-                    composable(Routes.DASHBOARD) {
+                    composable(
+                        Routes.DASHBOARD,
+                        enterTransition = { slideInHorizontally(tween(250)) { it / 3 } + fadeIn(tween(250)) },
+                        exitTransition = { fadeOut(tween(200)) },
+                        popEnterTransition = { fadeIn(tween(200)) },
+                        popExitTransition = { slideOutHorizontally(tween(250)) { it / 3 } + fadeOut(tween(250)) }
+                    ) {
                         DashboardScreen(dashboardVm, currency, onBack = { nav.popBackStack() })
                     }
-                    composable(Routes.SALES_HISTORY) {
+                    composable(
+                        Routes.CALCULATOR,
+                        enterTransition = { slideInHorizontally(tween(250)) { it / 3 } + fadeIn(tween(250)) },
+                        exitTransition = { fadeOut(tween(200)) },
+                        popEnterTransition = { fadeIn(tween(200)) },
+                        popExitTransition = { slideOutHorizontally(tween(250)) { it / 3 } + fadeOut(tween(250)) }
+                    ) {
+                        CalculatorScreen(onBack = { nav.popBackStack() })
+                    }
+                    composable(
+                        Routes.SALES_HISTORY,
+                        enterTransition = { slideInHorizontally(tween(250)) { it / 3 } + fadeIn(tween(250)) },
+                        exitTransition = { fadeOut(tween(200)) },
+                        popEnterTransition = { fadeIn(tween(200)) },
+                        popExitTransition = { slideOutHorizontally(tween(250)) { it / 3 } + fadeOut(tween(250)) }
+                    ) {
                         SalesHistoryScreen(repo, currency, onBack = { nav.popBackStack() })
                     }
                     composable(
                         Routes.PRODUCT_DETAILS,
-                        arguments = listOf(navArgument("productId") { type = NavType.LongType })
+                        arguments = listOf(navArgument("productId") { type = NavType.LongType }),
+                        enterTransition = { slideInHorizontally(tween(250)) { it / 3 } + fadeIn(tween(250)) },
+                        exitTransition = { fadeOut(tween(200)) },
+                        popEnterTransition = { fadeIn(tween(200)) },
+                        popExitTransition = { slideOutHorizontally(tween(250)) { it / 3 } + fadeOut(tween(250)) }
                     ) { backStack ->
                         val id = backStack.arguments?.getLong("productId") ?: 0L
                         val detailsVm: ProductDetailsViewModel =

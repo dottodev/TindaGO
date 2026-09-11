@@ -54,9 +54,11 @@ fun ProductImage(
     }
 
     val bmp = bitmap
-    if (bmp != null) {
+    // Cache the conversion so scrolling lists don't redo it every recomposition.
+    val imageBitmap = remember(bmp) { bmp?.asImageBitmap() }
+    if (imageBitmap != null) {
         Image(
-            bitmap = bmp.asImageBitmap(),
+            bitmap = imageBitmap,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = modifier

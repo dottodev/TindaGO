@@ -126,7 +126,7 @@ fun StockScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(products, key = { it.id }) { p ->
+                        items(products, key = { it.id }, contentType = { "product" }) { p ->
                             ProductCard(
                                 product = p,
                                 currency = currency,
@@ -141,7 +141,7 @@ fun StockScreen(
                     }
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(products, key = { it.id }) { p ->
+                        items(products, key = { it.id }, contentType = { "product" }) { p ->
                             ProductCard(
                                 product = p,
                                 currency = currency,

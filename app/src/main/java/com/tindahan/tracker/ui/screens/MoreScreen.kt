@@ -32,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -46,7 +47,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun MoreScreen(
     vm: SettingsViewModel,
-    onOpenDashboard: () -> Unit
+    onOpenDashboard: () -> Unit,
+    onOpenCalculator: () -> Unit
 ) {
     val businessName by vm.businessName.collectAsState()
     val theme by vm.theme.collectAsState()
@@ -114,6 +116,20 @@ fun MoreScreen(
             }
         }
         item {
+            Card(
+                onClick = onOpenCalculator,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.calculator), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.calculator_hint), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+        item {
             SectionCard(title = stringResource(R.string.business_name)) {
                 if (editBusiness) {
                     OutlinedTextField(value = businessDraft, onValueChange = { businessDraft = it }, label = { Text(stringResource(R.string.business_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -125,7 +141,7 @@ fun MoreScreen(
                 } else {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(if (businessName.isBlank()) "-" else businessName)
-                        TextButton(onClick = { businessDraft = businessName; editBusiness = true }) { Text(stringResource(R.string.edit_product)) }
+                        TextButton(onClick = { businessDraft = businessName; editBusiness = true }) { Text(stringResource(R.string.edit)) }
                     }
                 }
             }

@@ -21,6 +21,7 @@ Core philosophy: **Open → Understand → Tap → Done.**
   notes) and **expenses** with categories and notes
 - **Dashboard** – today's sales & expenses, outstanding utang, inventory value,
   honest profit estimate (shows "unavailable" when cost data is missing)
+- **Calculator** – built-in quick calculator for prices and change (More tab)
 - **Backup & Restore** – local JSON backup/restore, no account, no cloud
 - **CSV export** – products, sales, utang, expenses via the system file picker
 - English + Filipino (Tagalog) UI, dark / light / system theme
@@ -70,4 +71,8 @@ and fill in your keystore, or set `STORE_FILE`, `STORE_PASSWORD`,
 
 ## Privacy
 
-All business data stays on the device. No servers, no accounts, no network calls.
+All business data (products, sales, utang, expenses, backups) stays on the
+device. The app shows AdMob App Open ads, which require INTERNET /
+ACCESS_NETWORK_STATE and involve network requests to Google's ad servers —
+ad providers may collect device/advertising identifiers per their own policies.
+No analytics or tracking SDKs are included.

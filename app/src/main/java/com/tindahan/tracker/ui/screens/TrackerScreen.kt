@@ -1,6 +1,7 @@
 package com.tindahan.tracker.ui.screens
 
 import android.content.Intent
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,20 +13,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -62,24 +58,18 @@ fun TrackerScreen(
     val utangTab = stringResource(R.string.tab_utang)
     val expensesTab = stringResource(R.string.tab_expenses)
 
-    Scaffold(
-        floatingActionButton = {
-            if (tab == 0) {
-                FloatingActionButton(onClick = { /* handled inside UtangTab */ }) { }
+    Column(Modifier.fillMaxSize().padding(16.dp)) {
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            SegmentedButton(selected = tab == 0, onClick = { tab = 0 }, shape = SegmentedButtonDefaults.itemShape(0, 2)) {
+                Text(utangTab)
+            }
+            SegmentedButton(selected = tab == 1, onClick = { tab = 1 }, shape = SegmentedButtonDefaults.itemShape(1, 2)) {
+                Text(expensesTab)
             }
         }
-    ) { pad ->
-        Column(Modifier.fillMaxSize().padding(pad).padding(16.dp)) {
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                SegmentedButton(selected = tab == 0, onClick = { tab = 0 }, shape = SegmentedButtonDefaults.itemShape(0, 2)) {
-                    Text(utangTab)
-                }
-                SegmentedButton(selected = tab == 1, onClick = { tab = 1 }, shape = SegmentedButtonDefaults.itemShape(1, 2)) {
-                    Text(expensesTab)
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-            if (tab == 0) {
+        Spacer(Modifier.height(12.dp))
+        Crossfade(targetState = tab, label = "tracker-tab") { t ->
+            if (t == 0) {
                 UtangTab(utangVm, currency, businessName)
             } else {
                 ExpensesTab(expenseVm, currency)

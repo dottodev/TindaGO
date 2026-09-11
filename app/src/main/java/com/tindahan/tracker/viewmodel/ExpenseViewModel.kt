@@ -6,19 +6,21 @@ import androidx.lifecycle.viewModelScope
 import com.tindahan.tracker.data.repository.TindahanRepository
 import com.tindahan.tracker.util.DateUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class ExpenseViewModel(private val repo: TindahanRepository) : ViewModel() {
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()
 
-    val items = _query.flatMapLatest { repo.searchExpenses(it) }
+    val items = _query.debounce(150).flatMapLatest { repo.searchExpenses(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val todayTotal = repo.observeExpenseTotalBetween(DateUtils.startOfToday(), DateUtils.endOfToday())

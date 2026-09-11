@@ -7,21 +7,24 @@ import com.tindahan.tracker.data.local.entities.Product
 import com.tindahan.tracker.data.repository.TindahanRepository
 import com.tindahan.tracker.util.DateUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class StockViewModel(private val repo: TindahanRepository) : ViewModel() {
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()
 
     val products: StateFlow<List<Product>> = _query
+        .debounce(150)
         .flatMapLatest { q -> repo.searchProducts(q) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
