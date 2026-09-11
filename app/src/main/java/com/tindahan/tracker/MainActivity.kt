@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.app.Activity
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -27,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -110,24 +112,30 @@ private fun TindahanAppContent(app: TindahanApp) {
     val defaultLow by settings.defaultLowStock.collectAsState(initial = 5)
     val onboardingDone by settings.onboardingDone.collectAsState(initial = false)
 
-    // Mirror language for next process start (attachBaseContext) and apply it
-    // to the running Activity. The preference MUST be committed synchronously
-    // (not apply()) before any recreate(): attachBaseContext reads it from
-    // disk, and an async write loses the race, causing a recreate storm.
-    // The static guard is a second layer of protection against loops.
-    val activity = LocalContext.current as? android.app.Activity
-    androidx.compose.runtime.LaunchedEffect(language, activity) {
+    // Localized resources without restarting the Activity: swapping the
+    // context recomposes every string in place — no state loss, no flicker.
+    // attachBaseContext (forced locale) still covers cold start.
+    val strings = remember(language) {
+        val locale = Locale(if (language == "tl") "tl" else "en")
+        val config = Configuration(app.resources.configuration).apply { setLocale(locale) }
+        app.createConfigurationContext(config)
+    }
+    // Mirror language for next process start + keep JVM formatting consistent.
+    // commit() (not apply()) so a cold start right after switching can't
+    // read a stale value.
+    androidx.compose.runtime.LaunchedEffect(language) {
+        Locale.setDefault(if (language == "tl") Locale("tl") else Locale.ENGLISH)
         app.getSharedPreferences("locale_mirror", Context.MODE_PRIVATE)
             .edit().putString("language", language).commit()
-        val target = if (language == "tl") "tl" else "en"
-        val current = activity?.resources?.configuration?.locales?.get(0)?.language
-        if (activity != null && current != null && current != target && lastRecreateLang != language) {
-            lastRecreateLang = language
-            activity.recreate()
-        }
     }
 
     TindahanTheme(themeMode = theme) {
+        // Captured BEFORE the provider below overrides LocalContext.
+        val realActivity = LocalContext.current as? Activity
+        androidx.compose.runtime.CompositionLocalProvider(
+            LocalContext provides strings,
+            LocalAppActivity provides realActivity
+        ) {
         val nav = rememberNavController()
         val stockVm: StockViewModel = viewModel(factory = StockViewModel.Factory(repo))
         val utangVm: UtangViewModel = viewModel(factory = UtangViewModel.Factory(repo))
@@ -263,6 +271,7 @@ private fun TindahanAppContent(app: TindahanApp) {
                 }
             }
         }
+        }
     }
 }
 
@@ -272,5 +281,6 @@ private fun Keyed(key: String, content: @Composable () -> Unit) {
     androidx.compose.runtime.key(key) { content() }
 }
 
-// Process-level guard: survives Activity recreation, breaks any recreate loop.
-private var lastRecreateLang: String? = null
+/** The real Activity. LocalContext is overridden with localized resources,
+ * so screens that must launch intents use this instead. */
+internal val LocalAppActivity = compositionLocalOf<Activity?> { null }

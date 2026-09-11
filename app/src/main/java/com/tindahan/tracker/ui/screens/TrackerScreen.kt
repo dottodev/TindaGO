@@ -31,7 +31,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.tindahan.tracker.R
@@ -86,7 +85,8 @@ private fun UtangTab(vm: UtangViewModel, currency: String, businessName: String)
     val total by vm.grandTotal.collectAsState()
     var showAdd by remember { mutableStateOf(false) }
     var deleteId by remember { mutableStateOf<Long?>(null) }
-    val context = LocalContext.current
+    // Real Activity (LocalContext is a localized wrapper): needed to launch the chooser.
+    val activity = com.tindahan.tracker.LocalAppActivity.current
 
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
@@ -106,7 +106,7 @@ private fun UtangTab(vm: UtangViewModel, currency: String, businessName: String)
                     type = "text/plain"
                     putExtra(Intent.EXTRA_TEXT, text)
                 }
-                context.startActivity(Intent.createChooser(intent, null))
+                activity?.startActivity(Intent.createChooser(intent, null))
             }, modifier = Modifier.height(48.dp)) {
                 Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share_utang_list))
             }
