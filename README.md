@@ -71,7 +71,9 @@ Requirements: JDK 17, Android SDK (platform 34, build-tools 34.0.0).
 
 Release signing: copy `keystore.properties.example` to `keystore.properties`
 and fill in your keystore, or set `STORE_FILE`, `STORE_PASSWORD`,
-`KEY_ALIAS`, `KEY_PASSWORD` env vars.
+`KEY_ALIAS`, `KEY_PASSWORD` env vars. Without them the APK stays unsigned.
+Back up your release keystore somewhere safe (e.g. a password manager) —
+losing it means installed apps can never be updated with the same signature.
 
 ## Privacy
 
